@@ -1,0 +1,29 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+.container {
+  display: flex;
+  gap: 30px;
+}
+
+.left, .right {
+  flex: 1;
+}
+
+video, #overlay {
+  width: 100%;
+  max-width: 400px;
+}
+
+button {
+  display: block;
+  margin: 5px 0;
+  padding: 10px;
+  font-size: 16px;
+}
+
+canvas#chart {
+  margin-top: 20px;
+}
