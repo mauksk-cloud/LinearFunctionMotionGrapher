@@ -38,11 +38,22 @@ let chart = new Chart(document.getElementById("chart"), {
     }
 });
 
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-    video.srcObject = stream;
-})
-.catch(err => alert("Camera access denied"));
+window.addEventListener("DOMContentLoaded", () => {
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+            video.play();
+            requestAnimationFrame(processVideo);
+        };
+    })
+    .catch(err => {
+        alert("Camera access denied or unavailable.");
+        console.error(err);
+    });
+
+});
 
 function smooth(value) {
     smoothBuffer.push(value);
@@ -152,4 +163,3 @@ exportBtn.onclick = function() {
     link.click();
 };
 
-setTimeout(processVideo, 2000);
