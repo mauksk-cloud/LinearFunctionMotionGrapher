@@ -71,10 +71,12 @@ function smooth(value) {
     return smoothBuffer.reduce((a,b)=>a+b)/smoothBuffer.length;
 }
 
-if (typeof cv === "undefined" || typeof cv.aruco === "undefined") {
-    requestAnimationFrame(processVideo);
-    return;
-}
+function processVideo() {
+
+    if (typeof cv === "undefined" || typeof cv.aruco === "undefined") {
+        requestAnimationFrame(processVideo);
+        return;
+    }
 
     overlay.width = video.videoWidth;
     overlay.height = video.videoHeight;
@@ -110,10 +112,16 @@ if (typeof cv === "undefined" || typeof cv.aruco === "undefined") {
 
             if (recording) {
                 let t = (Date.now() - startTime)/1000;
-                chart.data.labels.push(t.toFixed(2));
-                chart.data.datasets[0].data.push(distance.toFixed(1));
-                chart.update();
-                data.push([t,distance]);
+
+                if (t >= parseFloat(maxTimeInput.value)) {
+                    recording = false;
+                    alert("Recording complete.");
+                } else {
+                    chart.data.labels.push(t.toFixed(2));
+                    chart.data.datasets[0].data.push(distance.toFixed(1));
+                    chart.update();
+                    data.push([t,distance]);
+                }
             }
         }
 
@@ -128,7 +136,11 @@ if (typeof cv === "undefined" || typeof cv.aruco === "undefined") {
         distanceDisplay.innerText = "Marker Not Detected";
     }
 
-    src.delete(); gray.delete(); corners.delete(); ids.delete();
+    src.delete(); 
+    gray.delete(); 
+    corners.delete(); 
+    ids.delete();
+
     requestAnimationFrame(processVideo);
 }
 
