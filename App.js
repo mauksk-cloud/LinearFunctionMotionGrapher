@@ -47,8 +47,10 @@ let chart = new Chart(document.getElementById("chart"), {
     }
 });
 
-window.addEventListener("DOMContentLoaded", () => {
+let cameraBtn = document.getElementById("cameraBtn");
+let detector = new AR.Detector();  // js-aruco2 detector
 
+cameraBtn.onclick = function() {
     navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
         video.srcObject = stream;
@@ -56,13 +58,14 @@ window.addEventListener("DOMContentLoaded", () => {
             video.play();
             requestAnimationFrame(processVideo);
         };
+        cameraBtn.disabled = true;
+        cameraBtn.textContent = "Camera On";
     })
     .catch(err => {
-        alert("Camera access denied or unavailable.");
+        alert("Camera access denied or unavailable: " + err.message);
         console.error(err);
     });
-
-});
+};
 
 function smooth(value) {
     smoothBuffer.push(value);
