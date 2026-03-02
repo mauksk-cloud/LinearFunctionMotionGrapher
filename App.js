@@ -1,7 +1,7 @@
 let maxTimeInput = document.getElementById("maxTime");
 let video = document.getElementById("video");
 let overlay = document.getElementById("overlay");
-let ctx = overlay.getContext("2d");
+let ctx = overlay.getContext("2d", { willReadFrequently: true });
 let distanceDisplay = document.getElementById("distanceDisplay");
 
 let markerSizeInput = document.getElementById("markerSize");
@@ -129,7 +129,6 @@ function processVideo() {
 }
 
 calibrateBtn.onclick = function() {
-    if (!cv) return;
     focalLength = (parseFloat(calibrationDistanceInput.value) * 
                    parseFloat(markerSizeInput.value)) / 100;
     alert("Calibration set.");
