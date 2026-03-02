@@ -7,6 +7,7 @@ let distanceDisplay = document.getElementById("distanceDisplay");
 let markerSizeInput = document.getElementById("markerSize");
 let calibrationDistanceInput = document.getElementById("calibrationDistance");
 let smoothSlider = document.getElementById("smoothSlider");
+let lastKnownPixelWidth = null;
 
 let calibrateBtn = document.getElementById("calibrateBtn");
 let startBtn = document.getElementById("startBtn");
@@ -26,7 +27,7 @@ let chart = new Chart(document.getElementById("chart"), {
     data: {
         labels: [],
         datasets: [{
-            label: 'Distance (cm)',
+            label: 'Distance (ft)',
             data: [],
             borderWidth: 2,
             pointRadius: 0
@@ -41,7 +42,7 @@ let chart = new Chart(document.getElementById("chart"), {
                 grid: { display: true }
             },
             y: {
-                title: { display: true, text: "Distance (cm)" },
+                title: { display: true, text: "Distance (ft)" },
                 grid: { display: true }
             }
         }
@@ -103,12 +104,15 @@ function processVideo() {
             corners[0].x - corners[1].x,
             corners[0].y - corners[1].y
         );
+        lastKnownPixelWidth = widthPixels; 
 
         if (focalLength) {
             let distance = (markerSizeInput.value * focalLength) / widthPixels;
             distance = smooth(distance);
-            distanceDisplay.innerText = "Distance: " + distance.toFixed(1) + " cm";
+            let distanceFeet = distance / 30.48;
+            distanceDisplay.innerText = "Distance: " + distanceFeet.toFixed(3) + " ft";
 
+            
             if (recording) {
                 let t = (Date.now() - startTime) / 1000;
                 if (t >= parseFloat(maxTimeInput.value)) {
@@ -116,10 +120,10 @@ function processVideo() {
                     alert("Recording complete.");
                 } else if (t - lastRecordTime >= 0.05) {  // record every 50ms = 20 samples/sec
                     lastRecordTime = t;
+                    chart.data.datasets[0].data.push(parseFloat(distanceFeet.toFixed(3)));
                     chart.data.labels.push(parseFloat(t.toFixed(2)));
-                    chart.data.datasets[0].data.push(parseFloat(distance.toFixed(1)));
                     chart.update();
-                    data.push([t, parseFloat(distance.toFixed(1))]);
+                    data.push([t, parseFloat(distanceFeet.toFixed(3))]);
                 }
             }
         }
@@ -131,9 +135,16 @@ function processVideo() {
 }
 
 calibrateBtn.onclick = function() {
-    focalLength = (parseFloat(calibrationDistanceInput.value) * 
-                   parseFloat(markerSizeInput.value)) / 100;
-    alert("Calibration set.");
+    let knownDistance = parseFloat(calibrationDistanceInput.value);  // in cm
+    let markerSize = parseFloat(markerSizeInput.value);              // in cm
+
+    // We need a current pixel width reading to calibrate properly
+    if (lastKnownPixelWidth === null) {
+        alert("Hold the marker in front of the camera, THEN click Calibrate.");
+        return;
+    }
+    focalLength = (lastKnownPixelWidth * knownDistance) / markerSize;
+    alert("Calibration set! Focal length: " + focalLength.toFixed(1));
 };
 
 startBtn.onclick = function() {
@@ -147,6 +158,8 @@ startBtn.onclick = function() {
 
 stopBtn.onclick = function() {
     recording = false;
+    smoothBuffer = [];
+    lastRecordTime = 0; 
 };
 
 clearBtn.onclick = function() {
@@ -154,6 +167,8 @@ clearBtn.onclick = function() {
     chart.data.datasets[0].data = [];
     chart.update();
     data = [];
+    smoothBuffer = [];
+    lastRecordTime = 0; 
 };
 
 exportBtn.onclick = function() {
