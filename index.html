@@ -92,40 +92,51 @@
     .hdr-btn:hover  { border-color: var(--accent); color: var(--accent); }
     .hdr-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.08); }
 
-    /* ── SPEEDOMETER BANNER ── */
+    /* ── BIG DISTANCE DISPLAY ── */
+    #bigDistDisplay {
+      display: none;
+      flex-shrink: 0;
+      padding: 8px 20px;
+      text-align: center;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+    }
+    .bigdist-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 3px;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    #bigDistVal {
+      font-family: 'Space Mono', monospace;
+      font-size: 2.8rem; font-weight: 700;
+      color: var(--accent); line-height: 1;
+    }
+
+    /* ── SPEEDOMETER BANNER — solid color, black text ── */
     #speedoBanner {
       display: none;
       flex-shrink: 0;
       padding: 10px 20px;
       text-align: center;
-      border-bottom: 4px solid var(--slope-zero);
-      background: rgba(255,215,64,0.06);
-      transition: background 0.2s, border-color 0.2s;
+      background: var(--slope-zero);
+      transition: background 0.2s;
     }
-    #speedoBanner.pos  { background: rgba(105,240,174,0.08); border-color: var(--slope-pos); }
-    #speedoBanner.neg  { background: rgba(255,64,129,0.08);  border-color: var(--slope-neg); }
-    .speedo-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+    #speedoBanner.pos  { background: var(--slope-pos); }
+    #speedoBanner.neg  { background: var(--slope-neg); }
+    .speedo-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 3px; color: rgba(0,0,0,0.5); text-transform: uppercase; }
     .speedo-row   { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
     #slopeVal {
       font-family: 'Space Mono', monospace;
       font-size: 3rem; font-weight: 700; line-height: 1;
-      color: var(--slope-zero);
-      transition: color 0.2s;
+      color: #000;
     }
-    #speedoBanner.pos #slopeVal { color: var(--slope-pos); }
-    #speedoBanner.neg #slopeVal { color: var(--slope-neg); }
-    #slopeArrow {
-      font-size: 1.8rem;
-      color: var(--slope-zero);
-      transition: color 0.2s, transform 0.2s;
-    }
-    #speedoBanner.pos #slopeArrow { color: var(--slope-pos); transform: rotate(-40deg); }
-    #speedoBanner.neg #slopeArrow { color: var(--slope-neg); transform: rotate(40deg); }
-    .speedo-unit { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); }
-    #slopeDir    { font-family: 'Space Mono', monospace; font-size: 0.7rem; }
-    #speedoBanner.pos  #slopeDir { color: var(--slope-pos); }
-    #speedoBanner.neg  #slopeDir { color: var(--slope-neg); }
-    #speedoBanner.zero #slopeDir { color: var(--slope-zero); }
+    #slopeArrow { font-size: 1.8rem; color: #000; transition: transform 0.2s; }
+    #speedoBanner.pos  #slopeArrow { transform: rotate(-40deg); }
+    #speedoBanner.neg  #slopeArrow { transform: rotate(40deg); }
+    #speedoBanner.zero #slopeArrow { transform: none; }
+    .speedo-unit { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: rgba(0,0,0,0.55); }
+    #slopeDir    { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: rgba(0,0,0,0.75); font-weight: 700; }
 
     /* ── MAIN CONTENT AREA ── */
     #content {
@@ -203,13 +214,20 @@
       font-weight: 700;
       color: #fff;
       text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
-      animation: pop 0.9s ease-out infinite;
+      animation: pop 0.9s ease-out forwards;
+      text-align: center;
+      line-height: 1;
+    }
+    #countdownNum.go {
+      font-size: 5rem;
+      text-shadow: 0 0 40px var(--success), 0 0 80px var(--success);
+      color: var(--success);
     }
     @keyframes pop {
-      0%   { transform: scale(1.3); opacity: 0.4; }
-      30%  { transform: scale(1.0); opacity: 1; }
-      90%  { transform: scale(0.95); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.2; }
+      0%   { transform: scale(1.4); opacity: 0.3; }
+      25%  { transform: scale(1.0); opacity: 1; }
+      85%  { transform: scale(0.95); opacity: 1; }
+      100% { transform: scale(0.88); opacity: 0.15; }
     }
 
     /* ── ACTION BUTTONS STRIP ── */
@@ -426,9 +444,16 @@
     <div class="status-dot" id="statusDot"></div>
     <h1>Motion Grapher</h1>
     <!-- toggle buttons -->
+    <button class="hdr-btn" id="distToggleBtn"      title="Big Distance Display">📏</button>
     <button class="hdr-btn" id="speedoToggleBtn"    title="Speedometer">⚡</button>
     <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope">🎨</button>
     <button class="hdr-btn" id="settingsOpenBtn"    title="Settings">⚙️</button>
+  </div>
+
+  <!-- ── BIG DISTANCE DISPLAY ── -->
+  <div id="bigDistDisplay">
+    <div class="bigdist-label">Distance from Camera</div>
+    <div id="bigDistVal">-- ft</div>
   </div>
 
   <!-- ── SPEEDOMETER BANNER ── -->

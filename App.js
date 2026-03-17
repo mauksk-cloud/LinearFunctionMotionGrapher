@@ -20,6 +20,7 @@ const smoothVal      = document.getElementById("smoothVal");
 const autoScaleToggle = document.getElementById("autoScaleToggle");
 
 // Header icon toggles
+const distToggleBtn      = document.getElementById("distToggleBtn");
 const speedoToggleBtn    = document.getElementById("speedoToggleBtn");
 const signSlopeToggleBtn = document.getElementById("signSlopeToggleBtn");
 const settingsOpenBtn    = document.getElementById("settingsOpenBtn");
@@ -32,6 +33,10 @@ const speedoBanner = document.getElementById("speedoBanner");
 const slopeVal     = document.getElementById("slopeVal");
 const slopeArrow   = document.getElementById("slopeArrow");
 const slopeDir     = document.getElementById("slopeDir");
+
+// Big distance display
+const bigDistDisplay = document.getElementById("bigDistDisplay");
+const bigDistVal     = document.getElementById("bigDistVal");
 
 // Countdown
 const countdownOverlay = document.getElementById("countdownOverlay");
@@ -68,6 +73,7 @@ let slopeBuffer         = [];
 let currentChallenge    = null;
 let speedoOn            = false;
 let signSlopeOn         = false;
+let bigDistOn           = false;
 let countdownTimer      = null;
 
 // ════════════════════════════════════════════════
@@ -88,6 +94,12 @@ panelOverlay.onclick     = closePanel;
 // ════════════════════════════════════════════════
 // HEADER TOGGLE BUTTONS
 // ════════════════════════════════════════════════
+distToggleBtn.onclick = () => {
+    bigDistOn = !bigDistOn;
+    distToggleBtn.classList.toggle("active", bigDistOn);
+    bigDistDisplay.style.display = bigDistOn ? "block" : "none";
+};
+
 speedoToggleBtn.onclick = () => {
     speedoOn = !speedoOn;
     speedoToggleBtn.classList.toggle("active", speedoOn);
@@ -259,11 +271,15 @@ function updateSpeedometer(slope) {
 function processVideo() {
     if (!video.videoWidth) { requestAnimationFrame(processVideo); return; }
 
-    overlay.width  = video.videoWidth;
-    overlay.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, overlay.width, overlay.height);
+    // Use the video's true pixel resolution — NOT the CSS display size.
+    // This prevents the marker outline from appearing stretched or rectangular.
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    overlay.width  = vw;
+    overlay.height = vh;
+    ctx.drawImage(video, 0, 0, vw, vh);
 
-    const imageData = ctx.getImageData(0, 0, overlay.width, overlay.height);
+    const imageData = ctx.getImageData(0, 0, vw, vh);
     const markers   = detector.detect(imageData);
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
@@ -291,6 +307,7 @@ function processVideo() {
             const distFt = distCm / 30.48;
 
             distBadge.innerText = "Distance: " + distFt.toFixed(3) + " ft";
+            if (bigDistOn) bigDistVal.textContent = distFt.toFixed(1) + " ft";
 
             const now   = (Date.now() - (startTime || Date.now())) / 1000;
             const slope = calcSlope(now, distFt);
@@ -343,6 +360,23 @@ calibrateBtn.onclick = function () {
 // ════════════════════════════════════════════════
 // RECORDING CONTROLS
 // ════════════════════════════════════════════════
+// ── Web Audio chime ──
+function playChime(isGo) {
+    try {
+        const ac  = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.frequency.value = isGo ? 880 : 440;   // high ping for GO, lower tick for countdown
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.4, ac.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (isGo ? 0.6 : 0.25));
+        osc.start(ac.currentTime);
+        osc.stop(ac.currentTime + (isGo ? 0.6 : 0.25));
+    } catch(e) { /* audio unavailable, silent fallback */ }
+}
+
 startBtn.onclick = function () {
     if (!focalLength) { alert("Please calibrate first (open ⚙️ Settings)."); return; }
     if (countingDown || recording) return;
@@ -350,24 +384,45 @@ startBtn.onclick = function () {
     const delay = parseInt(countdownDelayInput.value) || 0;
     if (delay <= 0) { beginRecording(); return; }
 
-    // ── Giant countdown ──
+    // ── Giant countdown: 3 → 2 → 1 → GO! ──
     countingDown = true;
     startBtn.disabled = true;
     let remaining = delay;
 
-    countdownNum.textContent = remaining;
+    function showCount(val) {
+        countdownNum.classList.remove('go');
+        if (val === 'GO!') {
+            countdownNum.classList.add('go');
+        }
+        // Restart CSS animation by cloning the node
+        const clone = countdownNum.cloneNode(true);
+        countdownNum.parentNode.replaceChild(clone, clone); // no-op trick — use offsetWidth instead:
+        countdownNum.textContent = val;
+        countdownNum.style.animation = 'none';
+        countdownNum.offsetHeight;   // force reflow
+        countdownNum.style.animation = '';
+    }
+
     countdownOverlay.classList.add("visible");
+    showCount(remaining);
+    playChime(false);
 
     countdownTimer = setInterval(() => {
         remaining--;
-        if (remaining <= 0) {
-            clearInterval(countdownTimer);
-            countdownOverlay.classList.remove("visible");
-            countingDown = false;
-            startBtn.disabled = false;
-            beginRecording();
-        } else {
-            countdownNum.textContent = remaining;
+        if (remaining > 0) {
+            showCount(remaining);
+            playChime(false);
+        } else if (remaining === 0) {
+            // Show GO!
+            showCount('GO!');
+            playChime(true);
+            setTimeout(() => {
+                clearInterval(countdownTimer);
+                countdownOverlay.classList.remove("visible");
+                countingDown = false;
+                startBtn.disabled = false;
+                beginRecording();
+            }, 700);
         }
     }, 1000);
 };
