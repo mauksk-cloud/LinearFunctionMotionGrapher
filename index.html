@@ -19,10 +19,11 @@
       --muted: #7986cb;
       --success: #69f0ae;
       --border: #2e3356;
+      --slope-pos: #69f0ae;
+      --slope-neg: #ff4081;
+      --slope-zero: #ffd740;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -52,10 +53,58 @@
       border-radius: 50%;
       background: var(--muted);
       transition: background 0.3s;
+      flex-shrink: 0;
     }
-    .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-dot.active    { background: var(--success); box-shadow: 0 0 8px var(--success); }
     .status-dot.recording { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ══ SLOPE SPEEDOMETER BANNER ══ */
+    #speedometerBanner {
+      display: none;
+      width: 100%;
+      padding: 16px 24px;
+      text-align: center;
+      transition: background 0.2s, border-color 0.2s;
+      border-bottom: 5px solid var(--slope-zero);
+      background: rgba(255,215,64,0.07);
+    }
+    #speedometerBanner.pos  { background: rgba(105,240,174,0.09); border-color: var(--slope-pos); }
+    #speedometerBanner.neg  { background: rgba(255,64,129,0.09);  border-color: var(--slope-neg); }
+    #speedometerBanner.zero { background: rgba(255,215,64,0.07);  border-color: var(--slope-zero); }
+    .speedometer-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .speedometer-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    #slopeValue {
+      font-family: 'Space Mono', monospace;
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      transition: color 0.2s;
+      color: var(--slope-zero);
+    }
+    #speedometerBanner.pos #slopeValue { color: var(--slope-pos); }
+    #speedometerBanner.neg #slopeValue { color: var(--slope-neg); }
+    #slopeArrow {
+      font-size: 2.5rem;
+      transition: color 0.2s, transform 0.2s;
+      color: var(--slope-zero);
+    }
+    #speedometerBanner.pos #slopeArrow { color: var(--slope-pos); transform: rotate(-45deg); }
+    #speedometerBanner.neg #slopeArrow { color: var(--slope-neg); transform: rotate(45deg); }
+    #speedometerBanner.zero #slopeArrow { color: var(--slope-zero); transform: rotate(0deg); }
+    .speedometer-unit {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
 
     /* ── MAIN LAYOUT ── */
     .main-grid {
@@ -68,31 +117,21 @@
     }
 
     /* ── VIDEO PANEL ── */
-    .video-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
+    .video-panel { display: flex; flex-direction: column; gap: 12px; }
     .video-wrapper {
       position: relative;
       background: #000;
       border-radius: 10px;
       overflow: hidden;
-      border: 2px solid var(--border);
+      border: 3px solid var(--border);
       aspect-ratio: 4/3;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    #overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-    }
+    .video-wrapper.slope-pos  { border-color: var(--slope-pos); box-shadow: 0 0 20px rgba(105,240,174,0.35); }
+    .video-wrapper.slope-neg  { border-color: var(--slope-neg); box-shadow: 0 0 20px rgba(255,64,129,0.35); }
+    .video-wrapper.slope-zero { border-color: var(--slope-zero); box-shadow: 0 0 20px rgba(255,215,64,0.25); }
+    #video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     .distance-badge {
       position: absolute;
       bottom: 10px; left: 50%;
@@ -117,7 +156,7 @@
     }
     .camera-icon { font-size: 2.5rem; opacity: 0.4; }
 
-    /* ── CAMERA BUTTON ── */
+    /* ── BUTTONS ── */
     #cameraBtn {
       width: 100%;
       padding: 12px;
@@ -134,13 +173,7 @@
     }
     #cameraBtn:hover { opacity: 0.85; }
     #cameraBtn:disabled { opacity: 0.4; cursor: default; }
-
-    /* ── RECORDING CONTROLS ── */
-    .record-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+    .record-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .btn {
       padding: 10px 12px;
       border: none;
@@ -153,11 +186,11 @@
       transition: all 0.15s;
       text-transform: uppercase;
     }
-    .btn:hover { transform: translateY(-1px); }
+    .btn:hover  { transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
-    .btn-start { background: var(--success); color: #000; grid-column: span 2; }
-    .btn-stop  { background: var(--accent2); color: #fff; }
-    .btn-clear { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-start  { background: var(--success); color: #000; grid-column: span 2; }
+    .btn-stop   { background: var(--accent2); color: #fff; }
+    .btn-clear  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-export { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
 
     /* ── CHART PANEL ── */
@@ -174,6 +207,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .chart-title {
       font-family: 'Space Mono', monospace;
@@ -182,17 +217,12 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
+    .chart-toggles { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
     .toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-      color: var(--muted);
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.72rem; color: var(--muted); white-space: nowrap;
     }
-    .toggle {
-      position: relative;
-      width: 40px; height: 22px;
-    }
+    .toggle { position: relative; width: 40px; height: 22px; }
     .toggle input { display: none; }
     .toggle-slider {
       position: absolute; inset: 0;
@@ -203,8 +233,7 @@
       transition: 0.2s;
     }
     .toggle-slider:before {
-      content: '';
-      position: absolute;
+      content: ''; position: absolute;
       width: 16px; height: 16px;
       left: 2px; top: 2px;
       background: var(--muted);
@@ -213,136 +242,85 @@
     }
     .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
     .toggle input:checked + .toggle-slider:before { transform: translateX(18px); background: #000; }
-
     .chart-container { position: relative; flex: 1; min-height: 280px; }
-
-    /* ── SMOOTHING ROW ── */
     .smooth-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.75rem;
-      color: var(--muted);
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.75rem; color: var(--muted);
     }
-    .smooth-row input[type=range] {
-      flex: 1;
-      accent-color: var(--accent);
-    }
-    #smoothVal {
-      font-family: 'Space Mono', monospace;
-      color: var(--accent);
-      min-width: 16px;
-      text-align: right;
-    }
+    .smooth-row input[type=range] { flex: 1; accent-color: var(--accent); }
+    #smoothVal { font-family: 'Space Mono', monospace; color: var(--accent); min-width: 16px; text-align: right; }
 
     /* ── DIVIDER ── */
     .section-divider {
-      max-width: 1400px;
-      margin: 24px auto 0;
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--muted);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      max-width: 1400px; margin: 24px auto 0; padding: 0 16px;
+      display: flex; align-items: center; gap: 12px;
+      color: var(--muted); font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
     }
     .section-divider::before, .section-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
-    /* ── BOTTOM SETTINGS ── */
+    /* ── BOTTOM CARDS ── */
     .settings-grid {
-      max-width: 1400px;
-      margin: 16px auto 0;
-      padding: 0 16px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      max-width: 1400px; margin: 16px auto 0; padding: 0 16px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;
     }
     .settings-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px;
     }
     .settings-card h3 {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--accent);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      font-family: 'Space Mono', monospace; font-size: 0.72rem;
+      color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
     }
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-bottom: 12px;
-    }
-    .field label {
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .field label { font-size: 0.75rem; color: var(--muted); }
     .field input[type=number] {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      padding: 8px 10px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 8px 10px;
+      font-family: 'Space Mono', monospace; font-size: 0.85rem;
+      width: 100%; outline: none; transition: border-color 0.2s;
     }
     .field input[type=number]:focus { border-color: var(--accent); }
     .btn-calibrate {
-      width: 100%;
-      padding: 10px;
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 8px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 1px;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: all 0.2s;
-      margin-top: 4px;
+      width: 100%; padding: 10px; background: transparent;
+      border: 1px solid var(--accent); color: var(--accent); border-radius: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 1px;
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s; margin-top: 4px;
     }
     .btn-calibrate:hover { background: var(--accent); color: #000; }
-
-    /* instructions */
-    .instructions ol {
-      padding-left: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .instructions li {
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
+    .cal-status { font-family: 'Space Mono', monospace; font-size: 0.7rem; margin-top: 8px; color: var(--muted); }
+    .cal-status.ok { color: var(--success); }
+    .instructions ol { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .instructions li { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
     .instructions li strong { color: var(--text); }
 
-    /* calibrated indicator */
-    .cal-status {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.7rem;
-      margin-top: 8px;
-      color: var(--muted);
+    /* ── SLOPE CHALLENGE CARD ── */
+    .challenge-display {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; margin-bottom: 10px;
+      font-family: 'Space Mono', monospace; font-size: 0.78rem;
+      color: var(--text); line-height: 1.7;
     }
-    .cal-status.ok { color: var(--success); }
+    .challenge-display .target { color: var(--accent); font-size: 1.05rem; font-weight: 700; }
+    #challengeScore {
+      font-family: 'Space Mono', monospace; font-size: 0.75rem;
+      color: var(--muted); min-height: 1.2em; margin-bottom: 8px;
+    }
+    #challengeScore.great { color: var(--success); }
+    #challengeScore.ok    { color: var(--slope-zero); }
+    #challengeScore.miss  { color: var(--accent2); }
+    .btn-challenge {
+      width: 100%; padding: 9px; background: transparent;
+      border: 1px solid var(--muted); color: var(--muted); border-radius: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.7rem;
+      cursor: pointer; text-transform: uppercase; transition: all 0.2s; margin-top: 5px;
+    }
+    .btn-challenge:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-challenge.judge { border-color: var(--success); color: var(--success); }
+    .btn-challenge.judge:hover { background: var(--success); color: #000; }
   </style>
 </head>
 <body>
@@ -352,7 +330,17 @@
   <h1>Motion Grapher</h1>
 </header>
 
-<!-- ══ TOP: MAIN CONTROLS ══ -->
+<!-- ══ SLOPE SPEEDOMETER BANNER ══ -->
+<div id="speedometerBanner" class="zero">
+  <div class="speedometer-label">Current Slope</div>
+  <div class="speedometer-row">
+    <span id="slopeValue">0.000</span>
+    <span id="slopeArrow">→</span>
+  </div>
+  <div class="speedometer-unit">ft / sec &nbsp;·&nbsp; <span id="slopeDirection">constant</span></div>
+</div>
+
+<!-- ══ MAIN CONTROLS ══ -->
 <div class="main-grid">
 
   <!-- LEFT: Video + controls -->
@@ -370,9 +358,9 @@
     <button class="btn" id="cameraBtn">▶ Start Camera</button>
 
     <div class="record-controls">
-      <button class="btn btn-start" id="startBtn">⬤ Start Recording</button>
-      <button class="btn btn-stop"  id="stopBtn">■ Stop</button>
-      <button class="btn btn-clear" id="clearBtn">↺ Clear Data</button>
+      <button class="btn btn-start"  id="startBtn">⬤ Start Recording</button>
+      <button class="btn btn-stop"   id="stopBtn">■ Stop</button>
+      <button class="btn btn-clear"  id="clearBtn">↺ Clear Data</button>
       <button class="btn btn-export" id="exportBtn">↓ Export CSV</button>
     </div>
   </div>
@@ -381,13 +369,33 @@
   <div class="chart-panel">
     <div class="chart-header">
       <span class="chart-title">Distance vs. Time</span>
-      <div class="toggle-wrap">
-        <span>Auto-scale Y</span>
-        <label class="toggle">
-          <input type="checkbox" id="autoScaleToggle">
-          <span class="toggle-slider"></span>
-        </label>
-        <span>Fixed (0–10 ft)</span>
+      <div class="chart-toggles">
+
+        <div class="toggle-wrap">
+          <span>Speedometer</span>
+          <label class="toggle">
+            <input type="checkbox" id="speedometerToggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-wrap">
+          <span>Sign of Slope</span>
+          <label class="toggle">
+            <input type="checkbox" id="signOfSlopeToggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-wrap">
+          <span>Auto-scale Y</span>
+          <label class="toggle">
+            <input type="checkbox" id="autoScaleToggle">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="color:var(--muted);font-size:0.68rem">Fixed 0–10ft</span>
+        </div>
+
       </div>
     </div>
     <div class="chart-container">
@@ -402,7 +410,7 @@
 
 </div>
 
-<!-- ══ BOTTOM: SETTINGS / CALIBRATION / INSTRUCTIONS ══ -->
+<!-- ══ BOTTOM SETTINGS ══ -->
 <div class="section-divider">Settings &amp; Calibration</div>
 
 <div class="settings-grid">
@@ -431,14 +439,25 @@
     </div>
   </div>
 
+  <!-- Slope Challenges -->
+  <div class="settings-card">
+    <h3>⚡ Slope Challenge</h3>
+    <div class="challenge-display" id="challengeText">
+      Press <em>New Challenge</em> to get a slope target to hit!
+    </div>
+    <div id="challengeScore"></div>
+    <button class="btn-challenge" id="newChallengeBtn">↻ New Challenge</button>
+    <button class="btn-challenge judge" id="judgeChallengeBtn">✓ Judge My Run</button>
+  </div>
+
   <!-- Instructions -->
   <div class="settings-card instructions">
     <h3>How To Use</h3>
     <ol>
       <li><strong>Start Camera</strong> and allow permission when asked</li>
-      <li>Print an <strong>Original ArUco marker</strong> (20–25 cm works best up to 10 ft)</li>
-      <li>Enter your marker size and stand at your calibration distance, then click <strong>Set Calibration</strong></li>
-      <li>Press <strong>Start Recording</strong>, then move toward or away from the camera</li>
+      <li>Print an <strong>Original ArUco marker</strong> at 20–25 cm for best range</li>
+      <li>Enter marker size, stand at calibration distance, click <strong>Set Calibration</strong></li>
+      <li>Press <strong>Start Recording</strong>, move toward or away from the camera</li>
       <li>Press <strong>Stop</strong>, then <strong>Export CSV</strong> to save your data</li>
     </ol>
   </div>
