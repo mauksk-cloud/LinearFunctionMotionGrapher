@@ -42,6 +42,7 @@ let detector            = null;
 let currentSlope        = 0;
 let slopeBuffer         = [];        // rolling window for slope calculation
 let currentChallenge    = null;
+let countingDown        = false;
 
 // ── Smooth slider live label ──
 smoothSlider.addEventListener("input", () => {
@@ -178,7 +179,7 @@ function updateSlope(t, distFt) {
 function updateSpeedometer(slope) {
     currentSlope = slope;
     let absSlope = Math.abs(slope);
-    slopeValue.textContent = (slope >= 0 ? '+' : '') + slope.toFixed(3);
+    slopeValue.textContent = (slope >= 0 ? '+' : '') + slope.toFixed(1);
 
     speedometerBanner.classList.remove('pos', 'neg', 'zero');
     videoWrapper.classList.remove('slope-pos', 'slope-neg', 'slope-zero');
@@ -295,33 +296,69 @@ calibrateBtn.onclick = function () {
     calStatus.classList.add("ok");
 };
 
-// ── Start recording ──
+// ── Start recording (with optional countdown) ──
 startBtn.onclick = function () {
     if (!focalLength) { alert("Please calibrate first."); return; }
+    if (countingDown || recording) return;
+
+    let delay = parseInt(document.getElementById("countdownDelay").value) || 0;
+
+    if (delay <= 0) {
+        beginRecording();
+        return;
+    }
+
+    // Countdown
+    countingDown = true;
+    startBtn.disabled = true;
+    let remaining = delay;
+
+    // Show countdown on the distance badge
+    distanceDisplay.innerText = "Starting in " + remaining + "...";
+
+    let tick = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(tick);
+            countingDown = false;
+            startBtn.disabled = false;
+            beginRecording();
+        } else {
+            distanceDisplay.innerText = "Starting in " + remaining + "...";
+        }
+    }, 1000);
+};
+
+function beginRecording() {
     recording      = true;
     startTime      = Date.now();
     lastRecordTime = 0;
     smoothBuffer   = [];
     slopeBuffer    = [];
     statusDot.classList.add("recording");
-};
+}
 
 // ── Stop ──
 stopBtn.onclick = function () {
-    recording = false;
+    recording    = false;
+    countingDown = false;
+    startBtn.disabled = false;
     smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
     statusDot.classList.remove("recording");
     if (focalLength) statusDot.classList.add("active");
-    evaluateChallenge();   // auto-judge after stopping
+    evaluateChallenge();
 };
 
 // ── Clear ──
 clearBtn.onclick = function () {
+    recording    = false;
+    countingDown = false;
+    startBtn.disabled = false;
     chart.data.labels = [];
     chart.data.datasets[0].data = [];
     chart.update();
     data = []; smoothBuffer = []; lastRecordTime = 0;
-    slopeBuffer = []; recording = false;
+    slopeBuffer = [];
     statusDot.classList.remove("recording");
     challengeScore.textContent = '';
     challengeScore.className   = '';
