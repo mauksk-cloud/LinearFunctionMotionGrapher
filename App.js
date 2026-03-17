@@ -1,56 +1,116 @@
-// ── Elements ──
-let maxTimeInput             = document.getElementById("maxTime");
-let video                    = document.getElementById("video");
-let overlay                  = document.getElementById("overlay");
-let ctx                      = overlay.getContext("2d", { willReadFrequently: true });
-let distanceDisplay          = document.getElementById("distanceDisplay");
-let markerSizeInput          = document.getElementById("markerSize");
-let calibrationDistanceInput = document.getElementById("calibrationDistance");
-let smoothSlider             = document.getElementById("smoothSlider");
-let smoothVal                = document.getElementById("smoothVal");
-let calibrateBtn             = document.getElementById("calibrateBtn");
-let startBtn                 = document.getElementById("startBtn");
-let stopBtn                  = document.getElementById("stopBtn");
-let clearBtn                 = document.getElementById("clearBtn");
-let exportBtn                = document.getElementById("exportBtn");
-let cameraBtn                = document.getElementById("cameraBtn");
-let autoScaleToggle          = document.getElementById("autoScaleToggle");
-let speedometerToggle        = document.getElementById("speedometerToggle");
-let signOfSlopeToggle        = document.getElementById("signOfSlopeToggle");
-let statusDot                = document.getElementById("statusDot");
-let calStatus                = document.getElementById("calStatus");
-let cameraPlaceholder        = document.getElementById("cameraPlaceholder");
-let videoWrapper             = document.getElementById("videoWrapper");
-let speedometerBanner        = document.getElementById("speedometerBanner");
-let slopeValue               = document.getElementById("slopeValue");
-let slopeArrow               = document.getElementById("slopeArrow");
-let slopeDirection           = document.getElementById("slopeDirection");
-let newChallengeBtn          = document.getElementById("newChallengeBtn");
-let judgeChallengeBtn        = document.getElementById("judgeChallengeBtn");
-let challengeText            = document.getElementById("challengeText");
-let challengeScore           = document.getElementById("challengeScore");
+// ════════════════════════════════════════════════
+// ELEMENTS
+// ════════════════════════════════════════════════
+const video          = document.getElementById("video");
+const overlay        = document.getElementById("overlay");
+const ctx            = overlay.getContext("2d", { willReadFrequently: true });
+const distBadge      = document.getElementById("distBadge");
+const videoWrapper   = document.getElementById("videoWrapper");
+const camPlaceholder = document.getElementById("camPlaceholder");
 
-// ── State ──
+const cameraBtn      = document.getElementById("cameraBtn");
+const startBtn       = document.getElementById("startBtn");
+const stopBtn        = document.getElementById("stopBtn");
+const clearBtn       = document.getElementById("clearBtn");
+const exportBtn      = document.getElementById("exportBtn");
+
+const statusDot      = document.getElementById("statusDot");
+const smoothSlider   = document.getElementById("smoothSlider");
+const smoothVal      = document.getElementById("smoothVal");
+const autoScaleToggle = document.getElementById("autoScaleToggle");
+
+// Header icon toggles
+const speedoToggleBtn    = document.getElementById("speedoToggleBtn");
+const signSlopeToggleBtn = document.getElementById("signSlopeToggleBtn");
+const settingsOpenBtn    = document.getElementById("settingsOpenBtn");
+const settingsCloseBtn   = document.getElementById("settingsCloseBtn");
+const settingsPanel      = document.getElementById("settingsPanel");
+const panelOverlay       = document.getElementById("panelOverlay");
+
+// Speedometer
+const speedoBanner = document.getElementById("speedoBanner");
+const slopeVal     = document.getElementById("slopeVal");
+const slopeArrow   = document.getElementById("slopeArrow");
+const slopeDir     = document.getElementById("slopeDir");
+
+// Countdown
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownNum     = document.getElementById("countdownNum");
+
+// Settings panel fields
+const markerSizeInput          = document.getElementById("markerSize");
+const calibrationDistanceInput = document.getElementById("calibrationDistance");
+const maxTimeInput             = document.getElementById("maxTime");
+const countdownDelayInput      = document.getElementById("countdownDelay");
+const calibrateBtn             = document.getElementById("calibrateBtn");
+const calStatus                = document.getElementById("calStatus");
+
+// Challenge
+const newChallengeBtn  = document.getElementById("newChallengeBtn");
+const judgeChallengeBtn= document.getElementById("judgeChallengeBtn");
+const challengeText    = document.getElementById("challengeText");
+const challengeScore   = document.getElementById("challengeScore");
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
 let focalLength         = null;
 let lastKnownPixelWidth = null;
 let recording           = false;
+let countingDown        = false;
 let data                = [];
 let startTime           = null;
 let smoothBuffer        = [];
 let lastRecordTime      = 0;
 let detector            = null;
 let currentSlope        = 0;
-let slopeBuffer         = [];        // rolling window for slope calculation
+let slopeBuffer         = [];
 let currentChallenge    = null;
-let countingDown        = false;
+let speedoOn            = false;
+let signSlopeOn         = false;
+let countdownTimer      = null;
 
-// ── Smooth slider live label ──
+// ════════════════════════════════════════════════
+// SETTINGS PANEL OPEN / CLOSE
+// ════════════════════════════════════════════════
+function openPanel() {
+    settingsPanel.classList.add("open");
+    panelOverlay.classList.add("visible");
+}
+function closePanel() {
+    settingsPanel.classList.remove("open");
+    panelOverlay.classList.remove("visible");
+}
+settingsOpenBtn.onclick  = openPanel;
+settingsCloseBtn.onclick = closePanel;
+panelOverlay.onclick     = closePanel;
+
+// ════════════════════════════════════════════════
+// HEADER TOGGLE BUTTONS
+// ════════════════════════════════════════════════
+speedoToggleBtn.onclick = () => {
+    speedoOn = !speedoOn;
+    speedoToggleBtn.classList.toggle("active", speedoOn);
+    speedoBanner.style.display = speedoOn ? "block" : "none";
+};
+
+signSlopeToggleBtn.onclick = () => {
+    signSlopeOn = !signSlopeOn;
+    signSlopeToggleBtn.classList.toggle("active", signSlopeOn);
+    chart.update();
+};
+
+// ════════════════════════════════════════════════
+// SMOOTH SLIDER
+// ════════════════════════════════════════════════
 smoothSlider.addEventListener("input", () => {
     smoothVal.textContent = smoothSlider.value;
 });
 
-// ── Chart ──
-let chart = new Chart(document.getElementById("chart"), {
+// ════════════════════════════════════════════════
+// CHART
+// ════════════════════════════════════════════════
+const chart = new Chart(document.getElementById("chart"), {
     type: 'line',
     data: {
         labels: [],
@@ -64,8 +124,7 @@ let chart = new Chart(document.getElementById("chart"), {
             fill: true,
             tension: 0.3,
             segment: {
-                // Sign-of-slope coloring: recolored per-segment when toggle is on
-                borderColor: ctx2 => getSegmentColor(ctx2)
+                borderColor: seg => getSegmentColor(seg)
             }
         }]
     },
@@ -74,9 +133,7 @@ let chart = new Chart(document.getElementById("chart"), {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                labels: { color: '#7986cb', font: { family: 'Space Mono', size: 11 } }
-            }
+            legend: { labels: { color: '#7986cb', font: { family: 'Space Mono', size: 11 } } }
         },
         scales: {
             x: {
@@ -85,8 +142,8 @@ let chart = new Chart(document.getElementById("chart"), {
                 ticks: {
                     color: '#7986cb',
                     font: { family: 'Space Mono', size: 10 },
-                    stepSize: 0.5,          // tick every 0.5 seconds
-                    callback: val => Number.isInteger(val * 2) ? val.toFixed(1) : null
+                    stepSize: 0.5,
+                    callback: v => Number.isInteger(v * 2) ? v.toFixed(1) : null
                 },
                 grid: { color: '#2e3356' },
                 min: 0
@@ -95,42 +152,31 @@ let chart = new Chart(document.getElementById("chart"), {
                 title: { display: true, text: "Distance (ft)", color: '#7986cb' },
                 ticks: { color: '#7986cb', font: { family: 'Space Mono', size: 10 } },
                 grid: { color: '#2e3356' },
-                min: 0,
-                max: 10
+                min: 0, max: 10
             }
         }
     }
 });
 
-// Per-segment color based on slope sign (used when Sign of Slope toggle is on)
-function getSegmentColor(ctx2) {
-    if (!signOfSlopeToggle.checked) return '#00e5ff';
-    let d = ctx2.p1.parsed.y - ctx2.p0.parsed.y;
-    if (Math.abs(d) < 0.015) return '#ffd740';   // zero / flat → yellow
-    return d > 0 ? '#ff4081' : '#69f0ae';          // moving away = positive slope = red; closer = green
+function getSegmentColor(seg) {
+    if (!signSlopeOn) return '#00e5ff';
+    const d = seg.p1.parsed.y - seg.p0.parsed.y;
+    if (Math.abs(d) < 0.015) return '#ffd740';
+    return d > 0 ? '#ff4081' : '#69f0ae';
 }
 
-// ── Y-axis scale toggle ──
 autoScaleToggle.addEventListener("change", () => {
     chart.options.scales.y.min = autoScaleToggle.checked ? undefined : 0;
     chart.options.scales.y.max = autoScaleToggle.checked ? undefined : 10;
     chart.update();
 });
 
-// ── Speedometer toggle ──
-speedometerToggle.addEventListener("change", () => {
-    speedometerBanner.style.display = speedometerToggle.checked ? 'block' : 'none';
-});
-
-// ── Sign of Slope toggle — force chart redraw ──
-signOfSlopeToggle.addEventListener("change", () => {
-    chart.update();
-});
-
-// ── Camera ──
+// ════════════════════════════════════════════════
+// CAMERA
+// ════════════════════════════════════════════════
 cameraBtn.onclick = function () {
-    if (typeof AR === "undefined" || typeof AR.Detector === "undefined") {
-        alert("ArUco library failed to load. Check your connection and refresh.");
+    if (typeof AR === "undefined") {
+        alert("ArUco library failed to load. Refresh and try again.");
         return;
     }
     if (!detector) detector = new AR.Detector();
@@ -139,85 +185,92 @@ cameraBtn.onclick = function () {
         .then(stream => {
             video.srcObject = stream;
             video.style.display = "block";
-            cameraPlaceholder.style.display = "none";
+            camPlaceholder.style.display = "none";
             video.onloadedmetadata = () => {
                 video.play();
                 statusDot.classList.add("active");
+                startBtn.disabled = false;
                 requestAnimationFrame(processVideo);
             };
             cameraBtn.disabled = true;
             cameraBtn.textContent = "Camera On";
         })
         .catch(err => {
-            alert("Camera access denied or unavailable: " + err.message);
-            console.error(err);
+            alert("Camera access denied: " + err.message);
         });
 };
 
-// ── Distance smoothing ──
+// ════════════════════════════════════════════════
+// SMOOTHING
+// ════════════════════════════════════════════════
 function smooth(value) {
     smoothBuffer.push(value);
-    if (smoothBuffer.length > parseInt(smoothSlider.value))
-        smoothBuffer.shift();
+    if (smoothBuffer.length > parseInt(smoothSlider.value)) smoothBuffer.shift();
     return smoothBuffer.reduce((a, b) => a + b) / smoothBuffer.length;
 }
 
-// ── Slope calculation (rolling window over last ~0.5s of data) ──
-function updateSlope(t, distFt) {
+// ════════════════════════════════════════════════
+// SLOPE CALCULATION
+// ════════════════════════════════════════════════
+function calcSlope(t, distFt) {
     slopeBuffer.push({ t, d: distFt });
-    // Keep only the last 0.5 seconds worth of points
     slopeBuffer = slopeBuffer.filter(p => t - p.t <= 0.5);
-    if (slopeBuffer.length < 2) return 0;
-    let oldest = slopeBuffer[0];
-    let newest = slopeBuffer[slopeBuffer.length - 1];
-    let dt = newest.t - oldest.t;
-    if (dt < 0.05) return currentSlope;   // avoid division by near-zero
+    if (slopeBuffer.length < 2) return currentSlope;
+    const oldest = slopeBuffer[0];
+    const newest = slopeBuffer[slopeBuffer.length - 1];
+    const dt = newest.t - oldest.t;
+    if (dt < 0.05) return currentSlope;
     return (newest.d - oldest.d) / dt;
 }
 
-// ── Update speedometer banner ──
+// ════════════════════════════════════════════════
+// SPEEDOMETER UPDATE
+// ════════════════════════════════════════════════
 function updateSpeedometer(slope) {
     currentSlope = slope;
-    let absSlope = Math.abs(slope);
-    slopeValue.textContent = (slope >= 0 ? '+' : '') + slope.toFixed(1);
+    const abs = Math.abs(slope);
+    slopeVal.textContent = (slope >= 0 ? '+' : '') + slope.toFixed(1);
 
-    speedometerBanner.classList.remove('pos', 'neg', 'zero');
+    speedoBanner.classList.remove('pos', 'neg', 'zero');
     videoWrapper.classList.remove('slope-pos', 'slope-neg', 'slope-zero');
 
-    if (absSlope < 0.05) {
-        speedometerBanner.classList.add('zero');
-        if (signOfSlopeToggle.checked) videoWrapper.classList.add('slope-zero');
-        slopeDirection.textContent = 'constant';
+    if (abs < 0.05) {
+        speedoBanner.classList.add('zero');
+        if (signSlopeOn) videoWrapper.classList.add('slope-zero');
+        slopeDir.textContent = 'constant';
         slopeArrow.textContent = '→';
+        slopeArrow.style.transform = 'none';
     } else if (slope > 0) {
-        speedometerBanner.classList.add('pos');
-        if (signOfSlopeToggle.checked) videoWrapper.classList.add('slope-pos');
-        slopeDirection.textContent = 'moving away';
+        speedoBanner.classList.add('pos');
+        if (signSlopeOn) videoWrapper.classList.add('slope-pos');
+        slopeDir.textContent = 'moving away';
         slopeArrow.textContent = '↗';
     } else {
-        speedometerBanner.classList.add('neg');
-        if (signOfSlopeToggle.checked) videoWrapper.classList.add('slope-neg');
-        slopeDirection.textContent = 'moving closer';
+        speedoBanner.classList.add('neg');
+        if (signSlopeOn) videoWrapper.classList.add('slope-neg');
+        slopeDir.textContent = 'moving closer';
         slopeArrow.textContent = '↘';
     }
 }
 
-// ── Process video frame ──
+// ════════════════════════════════════════════════
+// PROCESS VIDEO FRAME
+// ════════════════════════════════════════════════
 function processVideo() {
     if (!video.videoWidth) { requestAnimationFrame(processVideo); return; }
 
     overlay.width  = video.videoWidth;
     overlay.height = video.videoHeight;
-
     ctx.drawImage(video, 0, 0, overlay.width, overlay.height);
-    let imageData = ctx.getImageData(0, 0, overlay.width, overlay.height);
-    let markers   = detector.detect(imageData);
+
+    const imageData = ctx.getImageData(0, 0, overlay.width, overlay.height);
+    const markers   = detector.detect(imageData);
     ctx.clearRect(0, 0, overlay.width, overlay.height);
 
     if (markers.length > 0) {
-        let corners = markers[0].corners;
+        const corners = markers[0].corners;
 
-        // Draw outline
+        // Draw cyan outline
         ctx.strokeStyle = "#00e5ff";
         ctx.lineWidth   = 3;
         ctx.beginPath();
@@ -225,43 +278,32 @@ function processVideo() {
         ctx.closePath();
         ctx.stroke();
 
-        // Corner dots
+        // Pink corner dots
         ctx.fillStyle = "#ff4081";
-        corners.forEach(c => {
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-        });
+        corners.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, Math.PI*2); ctx.fill(); });
 
-        let widthPixels = Math.hypot(
-            corners[0].x - corners[1].x,
-            corners[0].y - corners[1].y
-        );
+        const widthPixels = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
         lastKnownPixelWidth = widthPixels;
 
         if (focalLength) {
-            let distanceCm = (parseFloat(markerSizeInput.value) * focalLength) / widthPixels;
-            distanceCm     = smooth(distanceCm);
-            let distanceFt = distanceCm / 30.48;
+            let distCm = (parseFloat(markerSizeInput.value) * focalLength) / widthPixels;
+            distCm     = smooth(distCm);
+            const distFt = distCm / 30.48;
 
-            distanceDisplay.innerText = "Distance: " + distanceFt.toFixed(3) + " ft";
+            distBadge.innerText = "Distance: " + distFt.toFixed(3) + " ft";
 
-            // Always compute slope for speedometer/sign-of-slope
-            let now = (Date.now() - (startTime || Date.now())) / 1000;
-            let slope = updateSlope(now, distanceFt);
+            const now   = (Date.now() - (startTime || Date.now())) / 1000;
+            const slope = calcSlope(now, distFt);
             updateSpeedometer(slope);
 
             if (recording) {
-                let t = (Date.now() - startTime) / 1000;
+                const t = (Date.now() - startTime) / 1000;
                 if (t >= parseFloat(maxTimeInput.value)) {
-                    recording = false;
-                    statusDot.classList.remove("recording");
-                    statusDot.classList.add("active");
-                    alert("Recording complete!");
+                    stopRecording();
                 } else if (t - lastRecordTime >= 0.05) {
                     lastRecordTime = t;
-                    let tVal = parseFloat(t.toFixed(2));
-                    let dVal = parseFloat(distanceFt.toFixed(3));
+                    const tVal = parseFloat(t.toFixed(2));
+                    const dVal = parseFloat(distFt.toFixed(3));
                     chart.data.labels.push(tVal);
                     chart.data.datasets[0].data.push(dVal);
                     chart.update();
@@ -269,62 +311,63 @@ function processVideo() {
                 }
             }
         } else {
-            distanceDisplay.innerText = "Not calibrated";
+            distBadge.innerText = "Not calibrated";
         }
 
     } else {
-        distanceDisplay.innerText = "Marker not detected";
+        distBadge.innerText = "Marker not detected";
         lastKnownPixelWidth = null;
-        // Remove sign-of-slope coloring when marker lost
-        videoWrapper.classList.remove('slope-pos', 'slope-neg', 'slope-zero');
+        videoWrapper.classList.remove('slope-pos','slope-neg','slope-zero');
     }
 
     requestAnimationFrame(processVideo);
 }
 
-// ── Calibrate ──
+// ════════════════════════════════════════════════
+// CALIBRATE
+// ════════════════════════════════════════════════
 calibrateBtn.onclick = function () {
     if (!lastKnownPixelWidth) {
         alert("Hold the marker in front of the camera first, then click Calibrate.");
         return;
     }
-    let knownDistance = parseFloat(calibrationDistanceInput.value);
-    let markerSize    = parseFloat(markerSizeInput.value);
-    focalLength       = (lastKnownPixelWidth * knownDistance) / markerSize;
-    startTime         = Date.now();   // seed so slope calc works before recording
-    calStatus.textContent = "✓ Calibrated at " + knownDistance + " cm";
+    const d = parseFloat(calibrationDistanceInput.value);
+    const s = parseFloat(markerSizeInput.value);
+    focalLength = (lastKnownPixelWidth * d) / s;
+    startTime   = Date.now();
+    calStatus.textContent = "✓ Calibrated at " + d + " cm";
     calStatus.classList.add("ok");
+    closePanel();
 };
 
-// ── Start recording (with optional countdown) ──
+// ════════════════════════════════════════════════
+// RECORDING CONTROLS
+// ════════════════════════════════════════════════
 startBtn.onclick = function () {
-    if (!focalLength) { alert("Please calibrate first."); return; }
+    if (!focalLength) { alert("Please calibrate first (open ⚙️ Settings)."); return; }
     if (countingDown || recording) return;
 
-    let delay = parseInt(document.getElementById("countdownDelay").value) || 0;
+    const delay = parseInt(countdownDelayInput.value) || 0;
+    if (delay <= 0) { beginRecording(); return; }
 
-    if (delay <= 0) {
-        beginRecording();
-        return;
-    }
-
-    // Countdown
+    // ── Giant countdown ──
     countingDown = true;
     startBtn.disabled = true;
     let remaining = delay;
 
-    // Show countdown on the distance badge
-    distanceDisplay.innerText = "Starting in " + remaining + "...";
+    countdownNum.textContent = remaining;
+    countdownOverlay.classList.add("visible");
 
-    let tick = setInterval(() => {
+    countdownTimer = setInterval(() => {
         remaining--;
         if (remaining <= 0) {
-            clearInterval(tick);
+            clearInterval(countdownTimer);
+            countdownOverlay.classList.remove("visible");
             countingDown = false;
             startBtn.disabled = false;
             beginRecording();
         } else {
-            distanceDisplay.innerText = "Starting in " + remaining + "...";
+            countdownNum.textContent = remaining;
         }
     }, 1000);
 };
@@ -338,80 +381,68 @@ function beginRecording() {
     statusDot.classList.add("recording");
 }
 
-// ── Stop ──
-stopBtn.onclick = function () {
-    recording    = false;
-    countingDown = false;
-    startBtn.disabled = false;
-    smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
+function stopRecording() {
+    recording = false;
     statusDot.classList.remove("recording");
     if (focalLength) statusDot.classList.add("active");
     evaluateChallenge();
+}
+
+stopBtn.onclick = function () {
+    if (countingDown) {
+        clearInterval(countdownTimer);
+        countdownOverlay.classList.remove("visible");
+        countingDown = false;
+        startBtn.disabled = false;
+    }
+    stopRecording();
+    smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
 };
 
-// ── Clear ──
 clearBtn.onclick = function () {
-    recording    = false;
-    countingDown = false;
-    startBtn.disabled = false;
+    if (countingDown) {
+        clearInterval(countdownTimer);
+        countdownOverlay.classList.remove("visible");
+        countingDown = false;
+    }
+    recording = false;
+    startBtn.disabled = !focalLength;
     chart.data.labels = [];
     chart.data.datasets[0].data = [];
     chart.update();
-    data = []; smoothBuffer = []; lastRecordTime = 0;
-    slopeBuffer = [];
+    data = []; smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
     statusDot.classList.remove("recording");
     challengeScore.textContent = '';
     challengeScore.className   = '';
 };
 
-// ── Export ──
 exportBtn.onclick = function () {
-    if (data.length === 0) { alert("No data to export yet!"); return; }
+    if (!data.length) { alert("No data to export yet!"); return; }
     let csv = "time_seconds,distance_ft\n";
-    data.forEach(row => { csv += row[0] + "," + row[1] + "\n"; });
-    let blob = new Blob([csv], { type: "text/csv" });
-    let link = document.createElement("a");
+    data.forEach(r => { csv += r[0] + "," + r[1] + "\n"; });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "motion_data.csv";
     link.click();
 };
 
-// ══════════════════════════════════════════
-// ── SLOPE CHALLENGES ──
-// ══════════════════════════════════════════
-
+// ════════════════════════════════════════════════
+// SLOPE CHALLENGES
+// ════════════════════════════════════════════════
 const CHALLENGES = [
-    {
-        description: "Walk at a <span class='target'>constant</span> speed away from the camera — aim for a slope of <span class='target'>+1.0 ft/sec</span>.",
-        targetSlope: 1.0, tolerance: 0.25, duration: 5
-    },
-    {
-        description: "Hold <span class='target'>perfectly still</span> — aim for a slope of <span class='target'>0.0 ft/sec</span>.",
-        targetSlope: 0.0, tolerance: 0.1, duration: 5
-    },
-    {
-        description: "Walk <span class='target'>slowly toward</span> the camera — aim for a slope of <span class='target'>−0.5 ft/sec</span>.",
-        targetSlope: -0.5, tolerance: 0.2, duration: 5
-    },
-    {
-        description: "Walk <span class='target'>quickly away</span> from the camera — aim for a slope of <span class='target'>+2.0 ft/sec</span>.",
-        targetSlope: 2.0, tolerance: 0.4, duration: 5
-    },
-    {
-        description: "Walk <span class='target'>slowly away</span> from the camera — aim for a slope of <span class='target'>+0.5 ft/sec</span>.",
-        targetSlope: 0.5, tolerance: 0.15, duration: 5
-    },
-    {
-        description: "Move <span class='target'>quickly toward</span> the camera — aim for a slope of <span class='target'>−1.5 ft/sec</span>.",
-        targetSlope: -1.5, tolerance: 0.4, duration: 5
-    }
+    { description: "Walk at a <span class='target'>constant</span> speed away — target slope: <span class='target'>+1.0 ft/sec</span>.", targetSlope:  1.0, tolerance: 0.25 },
+    { description: "Hold <span class='target'>perfectly still</span> — target slope: <span class='target'>0.0 ft/sec</span>.",          targetSlope:  0.0, tolerance: 0.10 },
+    { description: "Walk <span class='target'>slowly toward</span> the camera — target slope: <span class='target'>−0.5 ft/sec</span>.", targetSlope: -0.5, tolerance: 0.20 },
+    { description: "Walk <span class='target'>quickly away</span> — target slope: <span class='target'>+2.0 ft/sec</span>.",             targetSlope:  2.0, tolerance: 0.40 },
+    { description: "Walk <span class='target'>slowly away</span> — target slope: <span class='target'>+0.5 ft/sec</span>.",             targetSlope:  0.5, tolerance: 0.15 },
+    { description: "Move <span class='target'>quickly toward</span> — target slope: <span class='target'>−1.5 ft/sec</span>.",          targetSlope: -1.5, tolerance: 0.40 },
 ];
 
 newChallengeBtn.onclick = function () {
-    let idx = Math.floor(Math.random() * CHALLENGES.length);
-    currentChallenge = CHALLENGES[idx];
+    currentChallenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
     challengeText.innerHTML = currentChallenge.description +
-        `<br><br><em style="color:var(--muted);font-size:0.7rem">Record for ~${currentChallenge.duration}s then press Stop or Judge My Run.</em>`;
+        `<br><br><em style="color:var(--muted);font-size:0.68rem">Record for ~5s then press Stop or Judge My Run.</em>`;
     challengeScore.textContent = '';
     challengeScore.className   = '';
 };
@@ -420,26 +451,22 @@ judgeChallengeBtn.onclick = evaluateChallenge;
 
 function evaluateChallenge() {
     if (!currentChallenge || data.length < 4) return;
+    const n = data.length;
+    let sumT=0, sumD=0, sumTD=0, sumT2=0;
+    data.forEach(([t,d]) => { sumT+=t; sumD+=d; sumTD+=t*d; sumT2+=t*t; });
+    const slope = (n*sumTD - sumT*sumD) / (n*sumT2 - sumT*sumT);
+    const error = Math.abs(slope - currentChallenge.targetSlope);
+    const sign  = slope >= 0 ? '+' : '';
+    const tgt   = currentChallenge.targetSlope;
 
-    // Compute average slope over the whole recorded run using linear regression
-    let n  = data.length;
-    let sumT = 0, sumD = 0, sumTD = 0, sumT2 = 0;
-    data.forEach(([t, d]) => { sumT += t; sumD += d; sumTD += t * d; sumT2 += t * t; });
-    let avgSlope = (n * sumTD - sumT * sumD) / (n * sumT2 - sumT * sumT);
-
-    let target    = currentChallenge.targetSlope;
-    let tolerance = currentChallenge.tolerance;
-    let error     = Math.abs(avgSlope - target);
-    let sign      = avgSlope >= 0 ? '+' : '';
-
-    if (error <= tolerance) {
-        challengeScore.textContent = `🏅 Great! Your avg slope: ${sign}${avgSlope.toFixed(2)} ft/sec (target: ${target >= 0 ? '+' : ''}${target.toFixed(1)})`;
-        challengeScore.className   = 'great';
-    } else if (error <= tolerance * 2) {
-        challengeScore.textContent = `👍 Close! Your avg slope: ${sign}${avgSlope.toFixed(2)} ft/sec (target: ${target >= 0 ? '+' : ''}${target.toFixed(1)})`;
-        challengeScore.className   = 'ok';
+    if (error <= currentChallenge.tolerance) {
+        challengeScore.textContent = `🏅 Great! Avg slope: ${sign}${slope.toFixed(2)} ft/sec (target: ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.className = 'great';
+    } else if (error <= currentChallenge.tolerance * 2) {
+        challengeScore.textContent = `👍 Close! Avg slope: ${sign}${slope.toFixed(2)} ft/sec (target: ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.className = 'ok';
     } else {
-        challengeScore.textContent = `Keep trying! Your avg slope: ${sign}${avgSlope.toFixed(2)} ft/sec (target: ${target >= 0 ? '+' : ''}${target.toFixed(1)})`;
-        challengeScore.className   = 'miss';
+        challengeScore.textContent = `Keep trying! Avg slope: ${sign}${slope.toFixed(2)} ft/sec (target: ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.className = 'miss';
     }
 }
