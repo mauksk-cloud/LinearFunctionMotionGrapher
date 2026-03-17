@@ -389,40 +389,29 @@ startBtn.onclick = function () {
     startBtn.disabled = true;
     let remaining = delay;
 
-    function showCount(val) {
-        countdownNum.classList.remove('go');
-        if (val === 'GO!') {
-            countdownNum.classList.add('go');
-        }
-        // Restart CSS animation by cloning the node
-        const clone = countdownNum.cloneNode(true);
-        countdownNum.parentNode.replaceChild(clone, clone); // no-op trick — use offsetWidth instead:
-        countdownNum.textContent = val;
-        countdownNum.style.animation = 'none';
-        countdownNum.offsetHeight;   // force reflow
-        countdownNum.style.animation = '';
-    }
-
     countdownOverlay.classList.add("visible");
-    showCount(remaining);
+    countdownNum.classList.remove('go');
+    countdownNum.textContent = remaining;
     playChime(false);
 
     countdownTimer = setInterval(() => {
         remaining--;
         if (remaining > 0) {
-            showCount(remaining);
+            countdownNum.classList.remove('go');
+            countdownNum.textContent = remaining;
             playChime(false);
-        } else if (remaining === 0) {
-            // Show GO!
-            showCount('GO!');
+        } else {
+            countdownNum.classList.add('go');
+            countdownNum.textContent = 'GO!';
             playChime(true);
+            clearInterval(countdownTimer);
             setTimeout(() => {
-                clearInterval(countdownTimer);
                 countdownOverlay.classList.remove("visible");
+                countdownNum.classList.remove('go');
                 countingDown = false;
                 startBtn.disabled = false;
                 beginRecording();
-            }, 700);
+            }, 800);
         }
     }, 1000);
 };

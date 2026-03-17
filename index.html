@@ -214,7 +214,7 @@
       font-weight: 700;
       color: #fff;
       text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
-      animation: pop 0.9s ease-out forwards;
+      animation: pop 1s ease-out infinite;
       text-align: center;
       line-height: 1;
     }
@@ -222,12 +222,17 @@
       font-size: 5rem;
       text-shadow: 0 0 40px var(--success), 0 0 80px var(--success);
       color: var(--success);
+      animation: popgo 0.8s ease-out forwards;
     }
     @keyframes pop {
-      0%   { transform: scale(1.4); opacity: 0.3; }
-      25%  { transform: scale(1.0); opacity: 1; }
-      85%  { transform: scale(0.95); opacity: 1; }
-      100% { transform: scale(0.88); opacity: 0.15; }
+      0%   { transform: scale(1.3); opacity: 1; }
+      70%  { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(0.92); opacity: 0.5; }
+    }
+    @keyframes popgo {
+      0%   { transform: scale(1.5); opacity: 0.2; }
+      30%  { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(1.0); opacity: 1; }
     }
 
     /* ── ACTION BUTTONS STRIP ── */
