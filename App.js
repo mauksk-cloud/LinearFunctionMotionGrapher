@@ -301,6 +301,8 @@ function processVideo() {
         const widthPixels = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
         lastKnownPixelWidth = widthPixels;
 
+        console.log("Pixel width:", widthPixels);
+        
         if (focalLength) {
             let distCm = (parseFloat(markerSizeInput.value) * focalLength) / widthPixels;
             distCm     = smooth(distCm);
