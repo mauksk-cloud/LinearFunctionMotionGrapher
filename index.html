@@ -23,232 +23,112 @@
       --slope-pos:  #69f0ae;
       --slope-neg:  #ff4081;
       --slope-zero: #ffd740;
-      --panel-w:    360px;
+      --panel-w:    380px;
     }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;           /* NO scrolling ever */
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-    }
+    /* ── APP SHELL ── */
+    #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* ════════════════════════════════════
-       OUTER SHELL
-    ════════════════════════════════════ */
-    #app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ── HEADER BAR ── */
+    /* ── HEADER ── */
     #header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 14px;
       background: var(--surface);
       border-bottom: 2px solid var(--accent);
-      flex-shrink: 0;
-      z-index: 10;
+      flex-shrink: 0; z-index: 10;
     }
-    #header h1 {
-      font-family: 'Space Mono', monospace;
-      font-size: 1rem;
-      color: var(--accent);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      flex: 1;
-    }
-    .status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--muted);
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
+    #header h1 { font-family: 'Space Mono', monospace; font-size: 0.95rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; flex: 1; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
     .status-dot.active    { background: var(--success); box-shadow: 0 0 8px var(--success); }
     .status-dot.recording { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: blink 0.8s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    /* header icon buttons */
     .hdr-btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 7px;
-      width: 36px; height: 36px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-      flex-shrink: 0;
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 7px; width: 34px; height: 34px; font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
     }
     .hdr-btn:hover  { border-color: var(--accent); color: var(--accent); }
-    .hdr-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.08); }
+    .hdr-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
 
     /* ── BIG DISTANCE DISPLAY ── */
     #bigDistDisplay {
-      display: none;
-      flex-shrink: 0;
-      padding: 8px 20px;
-      text-align: center;
-      background: var(--surface);
-      border-bottom: 2px solid var(--border);
+      display: none; flex-shrink: 0; padding: 6px 20px;
+      text-align: center; background: var(--surface); border-bottom: 2px solid var(--border);
     }
-    .bigdist-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.6rem; letter-spacing: 3px;
-      color: var(--muted); text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-    #bigDistVal {
-      font-family: 'Space Mono', monospace;
-      font-size: 2.8rem; font-weight: 700;
-      color: var(--accent); line-height: 1;
-    }
+    .bigdist-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+    #bigDistVal { font-family: 'Space Mono', monospace; font-size: 2.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
 
-    /* ── SPEEDOMETER BANNER — solid color, black text ── */
-    #speedoBanner {
-      display: none;
-      flex-shrink: 0;
-      padding: 10px 20px;
-      text-align: center;
-      background: var(--slope-zero);
-      transition: background 0.2s;
-    }
+    /* ── SPEEDOMETER BANNER ── */
+    #speedoBanner { display: none; flex-shrink: 0; padding: 8px 20px; text-align: center; background: var(--slope-zero); transition: background 0.2s; }
     #speedoBanner.pos  { background: var(--slope-pos); }
     #speedoBanner.neg  { background: var(--slope-neg); }
-    .speedo-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 3px; color: rgba(0,0,0,0.5); text-transform: uppercase; }
+    .speedo-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 3px; color: rgba(0,0,0,0.5); text-transform: uppercase; }
     .speedo-row   { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
-    #slopeVal {
-      font-family: 'Space Mono', monospace;
-      font-size: 3rem; font-weight: 700; line-height: 1;
-      color: #000;
-    }
-    #slopeArrow { font-size: 1.8rem; color: #000; transition: transform 0.2s; }
+    #slopeVal  { font-family: 'Space Mono', monospace; font-size: 2.6rem; font-weight: 700; color: #000; line-height: 1; }
+    #slopeArrow { font-size: 1.6rem; color: #000; transition: transform 0.2s; }
     #speedoBanner.pos  #slopeArrow { transform: rotate(-40deg); }
     #speedoBanner.neg  #slopeArrow { transform: rotate(40deg); }
     #speedoBanner.zero #slopeArrow { transform: none; }
-    .speedo-unit { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: rgba(0,0,0,0.55); }
-    #slopeDir    { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: rgba(0,0,0,0.75); font-weight: 700; }
+    .speedo-unit { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.55); }
+    #slopeDir    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.75); font-weight: 700; }
 
-    /* ── MAIN CONTENT AREA ── */
-    #content {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
+    /* ── MAIN CONTENT ── */
+    #content { display: flex; flex: 1; overflow: hidden; position: relative; }
 
     /* ── VIDEO COLUMN ── */
-    #videoCol {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 10px;
-      width: 340px;
-      flex-shrink: 0;
-    }
-
+    #videoCol { display: flex; flex-direction: column; gap: 7px; padding: 8px; width: 300px; flex-shrink: 0; }
     #videoWrapper {
-      position: relative;
-      background: #000;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 3px solid var(--border);
-      flex: 1;
+      position: relative; background: #000; border-radius: 10px;
+      overflow: hidden; border: 3px solid var(--border); flex: 1;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    #videoWrapper.slope-pos  { border-color: var(--slope-pos); box-shadow: 0 0 20px rgba(105,240,174,0.3); }
-    #videoWrapper.slope-neg  { border-color: var(--slope-neg); box-shadow: 0 0 20px rgba(255,64,129,0.3); }
-    #videoWrapper.slope-zero { border-color: var(--slope-zero); box-shadow: 0 0 16px rgba(255,215,64,0.2); }
-
+    #videoWrapper.slope-pos  { border-color: var(--slope-pos); box-shadow: 0 0 18px rgba(105,240,174,0.3); }
+    #videoWrapper.slope-neg  { border-color: var(--slope-neg); box-shadow: 0 0 18px rgba(255,64,129,0.3); }
+    #videoWrapper.slope-zero { border-color: var(--slope-zero); box-shadow: 0 0 14px rgba(255,215,64,0.2); }
     #video   { width: 100%; height: 100%; object-fit: cover; display: block; }
     #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-    /* distance badge */
     #distBadge {
-      position: absolute;
-      bottom: 10px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.78);
-      border: 1px solid var(--accent);
-      border-radius: 20px;
-      padding: 4px 16px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.95rem;
-      color: var(--accent);
-      white-space: nowrap;
-      pointer-events: none;
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.78); border: 1px solid var(--accent); border-radius: 20px;
+      padding: 3px 14px; font-family: 'Space Mono', monospace; font-size: 0.85rem;
+      color: var(--accent); white-space: nowrap; pointer-events: none;
     }
-
-    /* camera placeholder */
     #camPlaceholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 10px; color: var(--muted);
-      font-family: 'Space Mono', monospace; font-size: 0.75rem;
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.7rem;
     }
-    .cam-icon { font-size: 2.5rem; opacity: 0.35; }
+    .cam-icon { font-size: 2rem; opacity: 0.35; }
 
-    /* ── GIANT COUNTDOWN OVERLAY ── */
+    /* countdown */
     #countdownOverlay {
-      position: absolute; inset: 0;
-      display: none;
+      position: absolute; inset: 0; display: none;
       align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.55);
-      z-index: 20;
-      border-radius: 8px;
+      background: rgba(0,0,0,0.55); z-index: 20; border-radius: 8px;
     }
     #countdownOverlay.visible { display: flex; }
     #countdownNum {
-      font-family: 'Space Mono', monospace;
-      font-size: 8rem;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
-      animation: pop 1s ease-out infinite;
-      text-align: center;
-      line-height: 1;
+      font-family: 'Space Mono', monospace; font-size: 7rem; font-weight: 700;
+      color: #fff; text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
+      animation: pop 1s ease-out infinite; text-align: center; line-height: 1;
     }
     #countdownNum.go {
-      font-size: 5rem;
+      font-size: 4.5rem; color: var(--success);
       text-shadow: 0 0 40px var(--success), 0 0 80px var(--success);
-      color: var(--success);
       animation: popgo 0.8s ease-out forwards;
     }
-    @keyframes pop {
-      0%   { transform: scale(1.3); opacity: 1; }
-      70%  { transform: scale(1.0); opacity: 1; }
-      100% { transform: scale(0.92); opacity: 0.5; }
-    }
-    @keyframes popgo {
-      0%   { transform: scale(1.5); opacity: 0.2; }
-      30%  { transform: scale(1.0); opacity: 1; }
-      100% { transform: scale(1.0); opacity: 1; }
-    }
+    @keyframes pop   { 0%{transform:scale(1.3);opacity:1} 70%{transform:scale(1);opacity:1} 100%{transform:scale(0.92);opacity:0.5} }
+    @keyframes popgo { 0%{transform:scale(1.5);opacity:0.2} 30%{transform:scale(1);opacity:1} 100%{transform:scale(1);opacity:1} }
 
-    /* ── ACTION BUTTONS STRIP ── */
-    #actionStrip {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      flex-shrink: 0;
-    }
+    /* ── ACTION BUTTONS ── */
+    #actionStrip { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
     .abtn {
-      padding: 10px 8px;
-      border: none; border-radius: 8px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 0.5px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.15s;
+      padding: 9px 6px; border: none; border-radius: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.4px; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
     }
     .abtn:hover  { filter: brightness(1.15); transform: translateY(-1px); }
     .abtn:active { transform: translateY(0); }
@@ -260,208 +140,189 @@
     .abtn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
 
     /* ── CHART COLUMN ── */
-    #chartCol {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 10px 10px 10px 0;
-      gap: 6px;
-      overflow: hidden;
-      min-width: 0;
-    }
+    #chartCol { flex: 1; display: flex; flex-direction: column; padding: 8px 8px 8px 0; gap: 6px; overflow: hidden; min-width: 0; }
     #chartPanel {
-      flex: 1;
-      background: var(--surface);
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow: hidden;
+      flex: 1; background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+      padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow: hidden;
     }
-    .chart-header {
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 6px;
-    }
-    .chart-title {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.75rem; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    #chartContainer { flex: 1; position: relative; min-height: 0; }
-
-    /* smooth row */
-    .smooth-row {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.72rem; color: var(--muted); flex-shrink: 0;
-    }
-    .smooth-row input[type=range] { flex: 1; accent-color: var(--accent); }
-    #smoothVal { font-family: 'Space Mono', monospace; color: var(--accent); min-width: 18px; }
-
-    /* chart toggles */
-    .chart-toggles { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .tog-wrap {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.7rem; color: var(--muted); white-space: nowrap;
-    }
-    .tog { position: relative; width: 36px; height: 20px; }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .chart-title  { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .chart-toggles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .tog-wrap { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+    .tog { position: relative; width: 34px; height: 19px; }
     .tog input { display: none; }
-    .tog-track {
-      position: absolute; inset: 0;
-      background: var(--surface2); border-radius: 10px;
-      cursor: pointer; border: 1px solid var(--border); transition: 0.2s;
-    }
-    .tog-track:before {
-      content: ''; position: absolute;
-      width: 14px; height: 14px; left: 2px; top: 2px;
-      background: var(--muted); border-radius: 50%; transition: 0.2s;
-    }
+    .tog-track { position: absolute; inset: 0; background: var(--surface2); border-radius: 10px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+    .tog-track:before { content: ''; position: absolute; width: 13px; height: 13px; left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
     .tog input:checked + .tog-track { background: var(--accent); border-color: var(--accent); }
-    .tog input:checked + .tog-track:before { transform: translateX(16px); background: #000; }
+    .tog input:checked + .tog-track:before { transform: translateX(15px); background: #000; }
+    #chartContainer { flex: 1; position: relative; min-height: 0; }
+    .smooth-row { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+    .smooth-row input[type=range] { flex: 1; accent-color: var(--accent); }
+    #smoothVal { font-family: 'Space Mono', monospace; color: var(--accent); min-width: 16px; }
 
-    /* ════════════════════════════════════
-       SETTINGS PANEL (slide-out right)
-    ════════════════════════════════════ */
+    /* ── FUNCTION ROW (below chart) ── */
+    #functionRow {
+      display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+      background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 7px 10px;
+    }
+    #functionRow label { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent); white-space: nowrap; }
+    #fnInput {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 5px 8px; font-family: 'Space Mono', monospace; font-size: 0.8rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    #fnInput:focus { border-color: var(--accent); }
+    #fnInput.error { border-color: var(--accent2); }
+    .fn-btn {
+      padding: 5px 10px; border: none; border-radius: 6px;
+      font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700;
+      cursor: pointer; text-transform: uppercase; transition: all 0.15s; white-space: nowrap;
+    }
+    #fnPlotBtn  { background: var(--accent); color: #000; }
+    #fnClearBtn { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    #fnError    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--accent2); white-space: nowrap; }
+
+    /* ── STATS ROW ── */
+    #statsRow {
+      display: none; align-items: center; gap: 14px; flex-shrink: 0;
+      background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
+      padding: 7px 12px; flex-wrap: wrap;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 1px; }
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--accent); font-weight: 700; }
+    .stat-val.pos  { color: var(--slope-pos); }
+    .stat-val.neg  { color: var(--slope-neg); }
+    #rmseDisplay { display: none; }
+
+    /* ── SETTINGS PANEL ── */
     #settingsPanel {
-      position: fixed;
-      top: 0; right: 0;
-      width: var(--panel-w);
-      height: 100vh;
-      background: var(--surface);
-      border-left: 2px solid var(--accent);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      position: fixed; top: 0; right: 0; width: var(--panel-w); height: 100vh;
+      background: var(--surface); border-left: 2px solid var(--accent);
+      z-index: 100; display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
       overflow-y: auto;
     }
     #settingsPanel.open { transform: translateX(0); }
-
-    #panelOverlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 99;
-      display: none;
-    }
+    #panelOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; display: none; }
     #panelOverlay.visible { display: block; }
-
-    .panel-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .panel-header h2 {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem; color: var(--accent);
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-    .close-btn {
-      background: none; border: none; color: var(--muted);
-      font-size: 1.3rem; cursor: pointer; line-height: 1;
-      transition: color 0.15s;
-    }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .panel-header h2 { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+    .close-btn { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; transition: color 0.15s; }
     .close-btn:hover { color: var(--accent2); }
-
-    .panel-section {
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-    .panel-section h3 {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.65rem; color: var(--accent);
-      letter-spacing: 2px; text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-    .field label { font-size: 0.73rem; color: var(--muted); }
+    .panel-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .panel-section h3 { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 11px; }
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+    .field label { font-size: 0.7rem; color: var(--muted); }
     .field input[type=number] {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text);
-      padding: 7px 10px; font-family: 'Space Mono', monospace;
-      font-size: 0.82rem; width: 100%; outline: none;
-      transition: border-color 0.2s;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 6px 9px; font-family: 'Space Mono', monospace;
+      font-size: 0.8rem; width: 100%; outline: none; transition: border-color 0.2s;
     }
     .field input[type=number]:focus { border-color: var(--accent); }
-
     .btn-cal {
-      width: 100%; padding: 9px;
-      background: transparent; border: 1px solid var(--accent);
-      color: var(--accent); border-radius: 8px;
-      font-family: 'Space Mono', monospace; font-size: 0.72rem;
-      letter-spacing: 1px; cursor: pointer; text-transform: uppercase;
-      transition: all 0.2s;
+      width: 100%; padding: 8px; background: transparent; border: 1px solid var(--accent);
+      color: var(--accent); border-radius: 8px; font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
     }
     .btn-cal:hover { background: var(--accent); color: #000; }
-
-    #calStatus {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.68rem; color: var(--muted); margin-top: 7px;
-    }
+    #calStatus { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-top: 6px; }
     #calStatus.ok { color: var(--success); }
-
-    /* challenge section */
     .challenge-box {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px; margin-bottom: 10px;
-      font-family: 'Space Mono', monospace; font-size: 0.73rem;
-      color: var(--text); line-height: 1.65;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 11px; margin-bottom: 9px; font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; color: var(--text); line-height: 1.65;
     }
     .challenge-box .target { color: var(--accent); font-weight: 700; }
-    #challengeScore {
-      font-family: 'Space Mono', monospace; font-size: 0.72rem;
-      color: var(--muted); min-height: 1.1em; margin-bottom: 8px;
-    }
+    #challengeScore { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); min-height: 1.1em; margin-bottom: 7px; }
     #challengeScore.great { color: var(--success); }
     #challengeScore.ok    { color: var(--warn); }
     #challengeScore.miss  { color: var(--accent2); }
     .btn-ch {
-      width: 100%; padding: 8px; background: transparent;
-      border: 1px solid var(--muted); color: var(--muted);
-      border-radius: 7px; font-family: 'Space Mono', monospace;
-      font-size: 0.68rem; cursor: pointer; text-transform: uppercase;
-      transition: all 0.18s; margin-top: 5px;
+      width: 100%; padding: 7px; background: transparent; border: 1px solid var(--muted);
+      color: var(--muted); border-radius: 7px; font-family: 'Space Mono', monospace;
+      font-size: 0.65rem; cursor: pointer; text-transform: uppercase; transition: all 0.18s; margin-top: 5px;
     }
     .btn-ch:hover { border-color: var(--accent); color: var(--accent); }
     .btn-ch.judge { border-color: var(--success); color: var(--success); }
     .btn-ch.judge:hover { background: var(--success); color: #000; }
 
-    /* instructions */
-    .inst-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
-    .inst-list li { font-size: 0.78rem; color: var(--muted); line-height: 1.5; display: flex; gap: 8px; }
-    .inst-list li::before {
-      content: attr(data-n);
-      font-family: 'Space Mono', monospace;
-      color: var(--accent); font-size: 0.65rem;
-      background: rgba(0,229,255,0.1); border-radius: 4px;
-      padding: 1px 5px; flex-shrink: 0; margin-top: 2px;
+    /* view mode selector */
+    .view-mode-group { display: flex; gap: 5px; }
+    .vm-btn {
+      flex: 1; padding: 6px 4px; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px; font-family: 'Space Mono', monospace;
+      font-size: 0.6rem; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center;
     }
+    .vm-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+    /* instructions */
+    .inst-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .inst-list li { font-size: 0.74rem; color: var(--muted); line-height: 1.5; display: flex; gap: 7px; }
+    .inst-list li::before { content: attr(data-n); font-family: 'Space Mono', monospace; color: var(--accent); font-size: 0.62rem; background: rgba(0,229,255,0.1); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; margin-top: 2px; }
     .inst-list li strong { color: var(--text); }
+
+    /* ── VALUES TABLE ── */
+    #tableModal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    #tableModal.visible { display: flex; }
+    #tableBox {
+      background: var(--surface); border: 2px solid var(--accent); border-radius: 12px;
+      padding: 20px; max-width: 600px; width: 90%; max-height: 80vh;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    #tableBox h3 { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; }
+    #tableScroll { overflow-y: auto; flex: 1; }
+    table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 0.72rem; }
+    th { color: var(--accent); padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; font-size: 0.62rem; letter-spacing: 1px; }
+    td { color: var(--text); padding: 5px 10px; border-bottom: 1px solid var(--surface2); }
+    td.residual.good { color: var(--success); }
+    td.residual.ok   { color: var(--warn); }
+    td.residual.miss { color: var(--accent2); }
+    #tableScore { font-family: 'Space Mono', monospace; font-size: 0.75rem; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
+    .close-table { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 14px; font-family: 'Space Mono', monospace; font-size: 0.65rem; cursor: pointer; }
+
+    /* ── ARUCO MARKER SCREEN ── */
+    #markerScreen {
+      display: none; position: fixed; inset: 0; background: #000;
+      z-index: 300; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    }
+    #markerScreen.visible { display: flex; }
+    #markerCanvas { image-rendering: pixelated; }
+    .marker-controls { display: flex; gap: 12px; align-items: center; }
+    .mctrl-btn {
+      padding: 10px 18px; border-radius: 8px; font-family: 'Space Mono', monospace;
+      font-size: 0.72rem; font-weight: 700; cursor: pointer; text-transform: uppercase; border: none;
+    }
+    #markerBackBtn   { background: var(--accent2); color: #fff; }
+    #markerRandomBtn { background: var(--accent);  color: #000; }
+    #markerIdLabel   { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #666; }
   </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ── HEADER ── -->
+  <!-- HEADER -->
   <div id="header">
     <div class="status-dot" id="statusDot"></div>
     <h1>Motion Grapher</h1>
-    <!-- toggle buttons -->
     <button class="hdr-btn" id="distToggleBtn"      title="Big Distance Display">📏</button>
     <button class="hdr-btn" id="speedoToggleBtn"    title="Speedometer">⚡</button>
     <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope">🎨</button>
+    <button class="hdr-btn" id="markerScreenBtn"    title="ArUco Marker Screen">🖥️</button>
+    <button class="hdr-btn" id="tableBtn"           title="Values Table">📋</button>
     <button class="hdr-btn" id="settingsOpenBtn"    title="Settings">⚙️</button>
   </div>
 
-  <!-- ── BIG DISTANCE DISPLAY ── -->
+  <!-- BIG DISTANCE -->
   <div id="bigDistDisplay">
     <div class="bigdist-label">Distance from Camera</div>
     <div id="bigDistVal">-- ft</div>
   </div>
 
-  <!-- ── SPEEDOMETER BANNER ── -->
+  <!-- SPEEDOMETER -->
   <div id="speedoBanner" class="zero">
     <div class="speedo-label">Current Slope</div>
     <div class="speedo-row">
@@ -471,68 +332,89 @@
     <div class="speedo-unit">ft / sec &nbsp;·&nbsp; <span id="slopeDir">constant</span></div>
   </div>
 
-  <!-- ── MAIN CONTENT ── -->
+  <!-- MAIN -->
   <div id="content">
 
-    <!-- VIDEO COLUMN -->
+    <!-- VIDEO -->
     <div id="videoCol">
       <div id="videoWrapper">
-        <div id="camPlaceholder">
-          <div class="cam-icon">📷</div>
-          <span>Camera not started</span>
-        </div>
+        <div id="camPlaceholder"><div class="cam-icon">📷</div><span>Camera not started</span></div>
         <video id="video" autoplay playsinline style="display:none"></video>
         <canvas id="overlay"></canvas>
         <div id="distBadge">Distance: -- ft</div>
-
-        <!-- COUNTDOWN OVERLAY — lives inside video wrapper so it's huge & centered -->
-        <div id="countdownOverlay">
-          <div id="countdownNum">3</div>
-        </div>
+        <div id="countdownOverlay"><div id="countdownNum">3</div></div>
       </div>
-
-      <!-- ACTION BUTTONS -->
       <div id="actionStrip">
         <button class="abtn abtn-cam"    id="cameraBtn">▶ Start Camera</button>
-        <button class="abtn abtn-start"  id="startBtn" disabled>⬤ Start Recording</button>
+        <button class="abtn abtn-start"  id="startBtn" disabled>⬤ Record</button>
         <button class="abtn abtn-stop"   id="stopBtn">■ Stop</button>
         <button class="abtn abtn-clear"  id="clearBtn">↺ Clear</button>
         <button class="abtn abtn-export" id="exportBtn">↓ Export CSV</button>
       </div>
     </div>
 
-    <!-- CHART COLUMN -->
+    <!-- CHART -->
     <div id="chartCol">
       <div id="chartPanel">
         <div class="chart-header">
           <span class="chart-title">Distance vs. Time</span>
           <div class="chart-toggles">
             <div class="tog-wrap">
-              <span>Auto-scale Y</span>
-              <label class="tog">
-                <input type="checkbox" id="autoScaleToggle">
-                <span class="tog-track"></span>
-              </label>
-              <span style="font-size:0.65rem;color:var(--border)">0–10 ft</span>
+              <span>Regression</span>
+              <label class="tog"><input type="checkbox" id="regressionToggle"><span class="tog-track"></span></label>
+            </div>
+            <div class="tog-wrap">
+              <span>Auto Y</span>
+              <label class="tog"><input type="checkbox" id="autoScaleToggle"><span class="tog-track"></span></label>
             </div>
           </div>
         </div>
-        <div id="chartContainer">
-          <canvas id="chart"></canvas>
-        </div>
+        <div id="chartContainer"><canvas id="chart"></canvas></div>
         <div class="smooth-row">
-          <span>Smoothing</span>
+          <span>Smooth</span>
           <input type="range" id="smoothSlider" min="1" max="15" value="5">
           <span id="smoothVal">5</span>
         </div>
       </div>
-    </div>
 
+      <!-- STATS ROW -->
+      <div id="statsRow">
+        <div class="stat-item">
+          <div class="stat-label">Slope</div>
+          <div class="stat-val" id="statSlope">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Distance</div>
+          <div class="stat-val" id="statDist">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">R²</div>
+          <div class="stat-val" id="statR2">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Regression</div>
+          <div class="stat-val" id="statReg">--</div>
+        </div>
+        <div class="stat-item" id="rmseDisplay">
+          <div class="stat-label">RMSE vs f(x)</div>
+          <div class="stat-val" id="statRmse">--</div>
+        </div>
+      </div>
+
+      <!-- FUNCTION ROW -->
+      <div id="functionRow">
+        <label>y =</label>
+        <input type="text" id="fnInput" placeholder="e.g.  2x + 1  or  3*x^2 - 1  or  2^x">
+        <button class="fn-btn" id="fnPlotBtn">Plot f(x)</button>
+        <button class="fn-btn" id="fnClearBtn">Clear f(x)</button>
+        <span id="fnError"></span>
+      </div>
+
+    </div><!-- /chartCol -->
   </div><!-- /content -->
-
 </div><!-- /app -->
 
-<!-- ════ SETTINGS PANEL (slide from right) ════ -->
+<!-- SETTINGS PANEL -->
 <div id="panelOverlay"></div>
 <div id="settingsPanel">
   <div class="panel-header">
@@ -540,58 +422,69 @@
     <button class="close-btn" id="settingsCloseBtn">✕</button>
   </div>
 
-  <!-- Calibration -->
   <div class="panel-section">
     <h3>Calibration</h3>
-    <div class="field">
-      <label>Marker Size (cm)</label>
-      <input type="number" id="markerSize" value="20">
-    </div>
-    <div class="field">
-      <label>Calibration Distance (cm)</label>
-      <input type="number" id="calibrationDistance" value="100">
-    </div>
+    <div class="field"><label>Marker Size (cm)</label><input type="number" id="markerSize" value="20"></div>
+    <div class="field"><label>Calibration Distance (cm)</label><input type="number" id="calibrationDistance" value="100"></div>
     <button class="btn-cal" id="calibrateBtn">Set Calibration</button>
-    <div id="calStatus">Not calibrated</div>
+    <div id="calStatus">Using default calibration (20 cm marker)</div>
   </div>
 
-  <!-- Recording -->
   <div class="panel-section">
     <h3>Recording</h3>
-    <div class="field">
-      <label>Max Recording Time (seconds)</label>
-      <input type="number" id="maxTime" value="5">
-    </div>
-    <div class="field">
-      <label>Countdown Delay (seconds)</label>
-      <input type="number" id="countdownDelay" value="3" min="0" max="10">
+    <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
+    <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
+    <div class="field"><label>X-axis duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
+  </div>
+
+  <div class="panel-section">
+    <h3>Graph Display Mode</h3>
+    <div class="view-mode-group">
+      <button class="vm-btn active" data-mode="full">Full</button>
+      <button class="vm-btn" data-mode="discrete">Discrete</button>
+      <button class="vm-btn" data-mode="hybrid">Hybrid</button>
     </div>
   </div>
 
-  <!-- Slope Challenge -->
   <div class="panel-section">
     <h3>⚡ Slope Challenge</h3>
-    <div class="challenge-box" id="challengeText">
-      Press <em>New Challenge</em> to get a slope target!
-    </div>
+    <div class="challenge-box" id="challengeText">Press <em>New Challenge</em> to get a slope target!</div>
     <div id="challengeScore"></div>
     <button class="btn-ch" id="newChallengeBtn">↻ New Challenge</button>
     <button class="btn-ch judge" id="judgeChallengeBtn">✓ Judge My Run</button>
   </div>
 
-  <!-- Instructions -->
   <div class="panel-section">
     <h3>How To Use</h3>
     <ul class="inst-list">
-      <li data-n="1"><span><strong>Start Camera</strong> — allow permission when asked</span></li>
-      <li data-n="2"><span>Print an <strong>Original ArUco marker</strong> at 20–25 cm</span></li>
-      <li data-n="3"><span>Hold marker up, enter size &amp; distance, click <strong>Set Calibration</strong></span></li>
-      <li data-n="4"><span>Press <strong>Start Recording</strong> and move toward/away from camera</span></li>
-      <li data-n="5"><span>Press <strong>Stop</strong> then <strong>Export CSV</strong> to save data</span></li>
+      <li data-n="1"><span><strong>Start Camera</strong> — allow permission</span></li>
+      <li data-n="2"><span>Hold 20 cm marker up — camera calibrates automatically</span></li>
+      <li data-n="3"><span>Press <strong>Record</strong> and move toward/away</span></li>
+      <li data-n="4"><span>Type a function in <strong>y =</strong> box to overlay or match</span></li>
+      <li data-n="5"><span>Press <strong>📋</strong> to see values table &amp; score</span></li>
     </ul>
   </div>
+</div>
 
-</div><!-- /settingsPanel -->
+<!-- VALUES TABLE MODAL -->
+<div id="tableModal">
+  <div id="tableBox">
+    <h3>VALUES TABLE</h3>
+    <div id="tableScroll"><table id="valTable"><thead></thead><tbody></tbody></table></div>
+    <div id="tableScore"></div>
+    <button class="close-table" id="closeTableBtn">Close</button>
+  </div>
+</div>
+
+<!-- ARUCO MARKER SCREEN -->
+<div id="markerScreen">
+  <canvas id="markerCanvas"></canvas>
+  <div class="marker-controls">
+    <button class="mctrl-btn" id="markerBackBtn">← Back to Grapher</button>
+    <button class="mctrl-btn" id="markerRandomBtn">↻ Random Marker</button>
+    <span id="markerIdLabel">Marker ID: 0</span>
+  </div>
+</div>
 
 <script src="App.js"></script>
 </body>
