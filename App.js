@@ -15,29 +15,27 @@ const clearBtn   = document.getElementById("clearBtn");
 const exportBtn  = document.getElementById("exportBtn");
 const statusDot  = document.getElementById("statusDot");
 
-const autoScaleToggle  = document.getElementById("autoScaleToggle");
-const regressionToggle = document.getElementById("regressionToggle");
-const signSlopeToggleBtn = document.getElementById("signSlopeToggleBtn");
+const autoScaleToggle   = document.getElementById("autoScaleToggle");
+const regressionToggle  = document.getElementById("regressionToggle");
+const signSlopeToggleBtn= document.getElementById("signSlopeToggleBtn");
 
-// Settings panel
 const settingsOpenBtn  = document.getElementById("settingsOpenBtn");
 const settingsCloseBtn = document.getElementById("settingsCloseBtn");
 const settingsPanel    = document.getElementById("settingsPanel");
 const panelOverlay     = document.getElementById("panelOverlay");
 
-// Right gauges
-const distReadout  = document.getElementById("distReadout");
-const distUnit     = document.getElementById("distUnit");
-const arrowCanvas  = document.getElementById("arrowCanvas");
-const arrowCtx     = arrowCanvas.getContext("2d");
-const slopeReadout = document.getElementById("slopeReadout");
-const slopeDirLabel= document.getElementById("slopeDirLabel");
+// Gauges
+const distReadout   = document.getElementById("distReadout");
+const arrowCanvas   = document.getElementById("arrowCanvas");
+const arrowCtx      = arrowCanvas.getContext("2d");
+const slopeReadout  = document.getElementById("slopeReadout");
+const slopeDirLabel = document.getElementById("slopeDirLabel");
 
 // Countdown
 const countdownOverlay = document.getElementById("countdownOverlay");
 const countdownNum     = document.getElementById("countdownNum");
 
-// Stats row
+// Stats
 const statsRow   = document.getElementById("statsRow");
 const statSlope  = document.getElementById("statSlope");
 const statDist   = document.getElementById("statDist");
@@ -46,7 +44,7 @@ const statReg    = document.getElementById("statReg");
 const rmseDisplay= document.getElementById("rmseDisplay");
 const statRmse   = document.getElementById("statRmse");
 
-// Settings fields
+// Settings
 const markerSizeInput          = document.getElementById("markerSize");
 const calibrationDistanceInput = document.getElementById("calibrationDistance");
 const maxTimeInput             = document.getElementById("maxTime");
@@ -55,13 +53,13 @@ const xAxisDurationInput       = document.getElementById("xAxisDuration");
 const calibrateBtn             = document.getElementById("calibrateBtn");
 const calStatus                = document.getElementById("calStatus");
 
-// Function row
-const fnInput   = document.getElementById("fnInput");
-const fnPlotBtn = document.getElementById("fnPlotBtn");
-const fnClearBtn= document.getElementById("fnClearBtn");
-const fnError   = document.getElementById("fnError");
+// Function box
+const fn1Input       = document.getElementById("fn1Input");
+const fn2Input       = document.getElementById("fn2Input");
+const fn3Input       = document.getElementById("fn3Input");
+const fnGlobalError  = document.getElementById("fnGlobalError");
 
-// Table modal
+// Table
 const tableModal    = document.getElementById("tableModal");
 const valTable      = document.getElementById("valTable");
 const tableScore    = document.getElementById("tableScore");
@@ -69,29 +67,46 @@ const closeTableBtn = document.getElementById("closeTableBtn");
 const tableBtn      = document.getElementById("tableBtn");
 
 // Marker screen
-const markerScreenBtn  = document.getElementById("markerScreenBtn");
-const markerScreen     = document.getElementById("markerScreen");
-const markerCanvas     = document.getElementById("markerCanvas");
-const markerBackBtn    = document.getElementById("markerBackBtn");
-const markerRandomBtn  = document.getElementById("markerRandomBtn");
-const markerIdLabel    = document.getElementById("markerIdLabel");
-const markerSizePx     = document.getElementById("markerSizePx");
-const markerSizeCm     = document.getElementById("markerSizeCm");
+const markerScreenBtn = document.getElementById("markerScreenBtn");
+const markerScreen    = document.getElementById("markerScreen");
+const markerCanvas    = document.getElementById("markerCanvas");
+const markerBackBtn   = document.getElementById("markerBackBtn");
+const markerRandomBtn = document.getElementById("markerRandomBtn");
+const markerIdLabel   = document.getElementById("markerIdLabel");
+const markerSizePx    = document.getElementById("markerSizePx");
+const markerSizeCm    = document.getElementById("markerSizeCm");
 
-// Challenge
+// Challenges
 const newChallengeBtn   = document.getElementById("newChallengeBtn");
 const judgeChallengeBtn = document.getElementById("judgeChallengeBtn");
 const challengeText     = document.getElementById("challengeText");
 const challengeScore    = document.getElementById("challengeScore");
 
-// View mode buttons
 const vmBtns = document.querySelectorAll(".vm-btn");
+
+// ════════════════════════════════════════════════
+// MULTI-FUNCTION SETUP
+// ════════════════════════════════════════════════
+const FN_COLORS = ['#ffd740', '#ff4081', '#b39ddb'];
+const FN_INPUTS = [fn1Input, fn2Input, fn3Input];
+// Compiled functions: null = not set
+let fnFunctions = [null, null, null];
+// Chart dataset indices: 0=motion, 1=ghost, then 2,3,4 = fn overlays, 5=regression
+// We'll manage dynamically — simpler to track by label
+const FN_DATASET_LABELS = ['fn1', 'fn2', 'fn3'];
+
+// Wire up plot/clear buttons
+document.querySelectorAll('.fn-plot-btn').forEach(btn => {
+    btn.onclick = () => plotFnSlot(parseInt(btn.dataset.fn) - 1);
+});
+document.querySelectorAll('.fn-clear-btn').forEach(btn => {
+    btn.onclick = () => clearFnSlot(parseInt(btn.dataset.fn) - 1);
+});
 
 // ════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════
-// Default focal length: 20cm marker at 100cm = 150px → f = (150*100)/20 = 750
-let focalLength         = 750;
+let focalLength         = 750;   // default: 20cm marker at 100cm = 150px → 750
 let lastKnownPixelWidth = null;
 let recording           = false;
 let countingDown        = false;
@@ -106,14 +121,11 @@ let currentChallenge    = null;
 let signSlopeOn         = false;
 let countdownTimer      = null;
 let viewMode            = 'full';
-let currentFn           = null;
 let regressionOn        = false;
-// Smooth arrow angle for rendering
 let arrowAngleDeg       = 0;
-let targetAngleDeg      = 0;
 
 // ════════════════════════════════════════════════
-// SETTINGS PANEL
+// PANELS
 // ════════════════════════════════════════════════
 const openPanel  = () => { settingsPanel.classList.add("open");  panelOverlay.classList.add("visible"); };
 const closePanel = () => { settingsPanel.classList.remove("open"); panelOverlay.classList.remove("visible"); };
@@ -121,18 +133,12 @@ settingsOpenBtn.onclick  = openPanel;
 settingsCloseBtn.onclick = closePanel;
 panelOverlay.onclick     = closePanel;
 
-// ════════════════════════════════════════════════
-// SIGN OF SLOPE TOGGLE (header)
-// ════════════════════════════════════════════════
 signSlopeToggleBtn.onclick = () => {
     signSlopeOn = !signSlopeOn;
     signSlopeToggleBtn.classList.toggle("active", signSlopeOn);
     rebuildChart();
 };
 
-// ════════════════════════════════════════════════
-// VIEW MODE
-// ════════════════════════════════════════════════
 vmBtns.forEach(btn => {
     btn.onclick = () => {
         vmBtns.forEach(b => b.classList.remove("active"));
@@ -149,41 +155,23 @@ const chart = new Chart(document.getElementById("chart"), {
     type: 'line',
     data: {
         datasets: [
-            {   // 0 — motion data
-                label: 'Motion',
-                data: [],
-                borderColor: '#00e5ff',
-                backgroundColor: 'rgba(0,229,255,0.07)',
-                borderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#00e5ff',
-                fill: true, tension: 0.3,
+            {   // 0 — live motion
+                label: 'Motion', data: [],
+                borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.07)',
+                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#fff', fill: true, tension: 0.3,
                 segment: { borderColor: seg => getSegmentColor(seg) }
             },
-            {   // 1 — function overlay
-                label: 'f(x)',
-                data: [],
-                borderColor: '#ffd740',
-                backgroundColor: 'transparent',
-                borderWidth: 2.5, borderDash: [6, 3],
-                pointRadius: 0, fill: false, tension: 0, hidden: true
+            {   // 1 — regression
+                label: 'Regression', data: [],
+                borderColor: '#7986cb', backgroundColor: 'transparent',
+                borderWidth: 2, borderDash: [4,4], pointRadius: 0, fill: false, tension: 0, hidden: true
             },
-            {   // 2 — regression
-                label: 'Regression',
-                data: [],
-                borderColor: '#ff4081',
-                backgroundColor: 'transparent',
-                borderWidth: 2, borderDash: [4, 4],
-                pointRadius: 0, fill: false, tension: 0, hidden: true
-            }
+            // fn1, fn2, fn3 overlays added dynamically at indices 2,3,4
         ]
     },
     options: {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
+        animation: false, responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
             legend: { labels: { color: '#7986cb', font: { family: 'Space Mono', size: 10 } } },
@@ -193,8 +181,8 @@ const chart = new Chart(document.getElementById("chart"), {
                 titleFont: { family: 'Space Mono', size: 10 },
                 bodyFont:  { family: 'Space Mono', size: 11 },
                 callbacks: {
-                    title: items => `t = ${items[0].parsed.x.toFixed(2)}s`,
-                    label: item => ` ${item.dataset.label}: (${item.parsed.x.toFixed(2)}s, ${item.parsed.y.toFixed(3)}ft)`
+                    title: items => `t = ${items[0].parsed.x.toFixed(2)} s`,
+                    label: item => ` ${item.dataset.label}: (${item.parsed.x.toFixed(2)}, ${item.parsed.y.toFixed(3)} ft)`
                 }
             }
         },
@@ -208,35 +196,48 @@ const chart = new Chart(document.getElementById("chart"), {
                     callback: v => (Math.round(v * 4) === v * 4) ? v.toFixed(2) : null
                 },
                 grid: {
-                    color: c => Number.isInteger(c.tick.value) ? 'rgba(100,120,200,0.4)' : 'rgba(46,51,86,0.8)',
+                    color: c => Number.isInteger(c.tick.value) ? 'rgba(100,120,200,0.45)' : 'rgba(46,51,86,0.9)',
                     lineWidth: c => Number.isInteger(c.tick.value) ? 1.5 : 0.7
                 },
-                min: 0, max: parseFloat(xAxisDurationInput.value) || 5
+                min: 0, max: 5
             },
             y: {
                 title: { display: true, text: "Distance (ft)", color: '#7986cb' },
                 ticks: { color: '#7986cb', font: { family: 'Space Mono', size: 10 }, stepSize: 1 },
                 grid: {
-                    color: c => Number.isInteger(c.tick.value) ? 'rgba(100,120,200,0.4)' : 'rgba(46,51,86,0.8)',
+                    color: c => Number.isInteger(c.tick.value) ? 'rgba(100,120,200,0.45)' : 'rgba(46,51,86,0.9)',
                     lineWidth: c => Number.isInteger(c.tick.value) ? 1.5 : 0.7
                 },
-                min: 0, max: 15   // FIX #6: y-axis to 15 ft
+                min: 0, max: 15
             }
         }
     }
 });
+
+// Ensure fn overlay datasets exist at startup
+function ensureFnDatasets() {
+    while (chart.data.datasets.length < 5) {
+        const i = chart.data.datasets.length - 2; // 0,1,2 → fn0,fn1,fn2
+        chart.data.datasets.push({
+            label: FN_DATASET_LABELS[i] || `fn${i}`,
+            data: [], borderColor: FN_COLORS[i] || '#fff',
+            backgroundColor: 'transparent', borderWidth: 2.5,
+            borderDash: [6,3], pointRadius: 0, fill: false, tension: 0, hidden: true
+        });
+    }
+}
+ensureFnDatasets();
 
 xAxisDurationInput.addEventListener("change", () => {
     chart.options.scales.x.max = parseFloat(xAxisDurationInput.value) || 5;
     chart.update();
 });
 
-// FIX #7: flipped colors — positive slope = green, negative = red
 function getSegmentColor(seg) {
     if (!signSlopeOn) return '#00e5ff';
     const d = seg.p1.parsed.y - seg.p0.parsed.y;
-    if (Math.abs(d) < 0.015) return '#ffd740';       // flat → yellow
-    return d > 0 ? '#69f0ae' : '#ff4081';              // up=green, down=red
+    if (Math.abs(d) < 0.015) return '#ffd740';
+    return d > 0 ? '#69f0ae' : '#ff4081';
 }
 
 autoScaleToggle.addEventListener("change", () => {
@@ -256,52 +257,47 @@ regressionToggle.addEventListener("change", () => {
 function rebuildChart() {
     if (!data.length) return;
     let pts = [];
-
     if (viewMode === 'full') {
-        pts = data.map(([t, d]) => ({ x: t, y: d }));
+        pts = data.map(([t,d]) => ({ x: t, y: d }));
         chart.data.datasets[0].tension    = 0.3;
         chart.data.datasets[0].pointRadius = 0;
         chart.data.datasets[0].showLine   = true;
     } else if (viewMode === 'discrete') {
-        // FIX #4: sample at exact 0, 0.5, 1.0 ... intervals
         pts = sampleAtIntervals(data, 0.5);
         chart.data.datasets[0].tension    = 0;
         chart.data.datasets[0].pointRadius = 6;
         chart.data.datasets[0].showLine   = false;
-    } else { // hybrid
+    } else {
         pts = sampleAtIntervals(data, 0.5);
         chart.data.datasets[0].tension    = 0;
         chart.data.datasets[0].pointRadius = 6;
         chart.data.datasets[0].showLine   = true;
     }
-
     chart.data.datasets[0].data = pts;
     chart.data.datasets[0].segment = { borderColor: seg => getSegmentColor(seg) };
 
-    // Regression
     if (regressionOn && data.length >= 3) {
         const reg  = linearRegression(data);
         const xMax = chart.options.scales.x.max || 5;
-        chart.data.datasets[2].data   = [{ x: 0, y: reg.b }, { x: xMax, y: reg.m * xMax + reg.b }];
-        chart.data.datasets[2].hidden = false;
+        chart.data.datasets[1].data   = [{ x: 0, y: reg.b }, { x: xMax, y: reg.m * xMax + reg.b }];
+        chart.data.datasets[1].hidden = false;
         updateStatsRow(reg);
     } else {
-        chart.data.datasets[2].data   = [];
-        chart.data.datasets[2].hidden = true;
+        chart.data.datasets[1].data   = [];
+        chart.data.datasets[1].hidden = true;
         if (data.length >= 3) updateStatsRow(null);
     }
 
-    if (currentFn) plotFunctionOverlay();
+    // Replot all active fn overlays
+    fnFunctions.forEach((fn, i) => { if (fn) plotFnOverlay(i); });
     chart.update();
 }
 
-// FIX #4: sample at exact interval boundaries by interpolating
 function sampleAtIntervals(rawData, intervalSec) {
     if (!rawData.length) return [];
     const maxT = rawData[rawData.length - 1][0];
     const pts  = [];
     for (let t = 0; t <= maxT + 0.001; t = parseFloat((t + intervalSec).toFixed(4))) {
-        // Find the two surrounding points and interpolate
         let lo = rawData[0], hi = rawData[rawData.length - 1];
         for (let i = 0; i < rawData.length - 1; i++) {
             if (rawData[i][0] <= t && rawData[i+1][0] >= t) { lo = rawData[i]; hi = rawData[i+1]; break; }
@@ -322,11 +318,13 @@ function updateStatsRow(reg) {
         const sign = reg.m >= 0 ? '+' : '';
         statSlope.textContent = `${sign}${reg.m.toFixed(3)} ft/s`;
         statSlope.className   = 'stat-val ' + (reg.m > 0.05 ? 'pos' : reg.m < -0.05 ? 'neg' : '');
-        statReg.textContent   = `y=${reg.m.toFixed(2)}x${reg.b >= 0 ? '+' : ''}${reg.b.toFixed(2)}`;
+        statReg.textContent   = `y=${reg.m.toFixed(2)}x${reg.b>=0?'+':''}${reg.b.toFixed(2)}`;
         statR2.textContent    = reg.r2.toFixed(4);
     }
-    if (currentFn && data.length) {
-        const rmse = calcRmse(data, currentFn);
+    // RMSE for first active fn
+    const firstFn = fnFunctions.find(f => f !== null);
+    if (firstFn && data.length) {
+        const rmse = calcRmse(data, firstFn);
         statRmse.textContent = rmse.toFixed(4) + ' ft';
         rmseDisplay.style.display = 'flex';
     } else {
@@ -343,12 +341,12 @@ function updateLiveStats(distFt, slope) {
 }
 
 // ════════════════════════════════════════════════
-// REGRESSION MATH
+// REGRESSION + RMSE
 // ════════════════════════════════════════════════
 function linearRegression(pts) {
     const n = pts.length;
-    let sumT=0, sumD=0, sumTD=0, sumT2=0, sumD2=0;
-    pts.forEach(([t,d]) => { sumT+=t; sumD+=d; sumTD+=t*d; sumT2+=t*t; sumD2+=d*d; });
+    let sumT=0, sumD=0, sumTD=0, sumT2=0;
+    pts.forEach(([t,d]) => { sumT+=t; sumD+=d; sumTD+=t*d; sumT2+=t*t; });
     const m = (n*sumTD - sumT*sumD) / (n*sumT2 - sumT*sumT);
     const b = (sumD - m*sumT) / n;
     const meanD = sumD / n;
@@ -362,116 +360,112 @@ function calcRmse(pts, fn) {
 }
 
 // ════════════════════════════════════════════════
-// ROTATING ARROW GAUGE (canvas)
+// SLOPE ARROW GAUGE — full bidirectional arrow with intensity background
 // ════════════════════════════════════════════════
-// angle: 0° = pointing right (zero slope), -90° = up (moving away), +90° = down (moving closer)
-// We map slope: clamp to ±3 ft/s → angle ±80°
+function slopeToColor(slope) {
+    // intensity: 0 at slope=0, max at slope=±4
+    const abs  = Math.abs(slope);
+    const norm = Math.min(abs / 4, 1);   // 0–1
+    // Map norm → opacity for the glow/fill: 0.08 (faint) to 0.85 (vivid)
+    const alpha = 0.08 + norm * 0.77;
+    if (abs < 0.05) return { solid: `rgba(255,215,64,${alpha})`, pure: '#ffd740', name: 'zero' };
+    if (slope > 0)  return { solid: `rgba(105,240,174,${alpha})`, pure: '#69f0ae', name: 'pos' };
+    return              { solid: `rgba(255,64,129,${alpha})`,  pure: '#ff4081', name: 'neg' };
+}
+
 function drawArrow(angleDeg, slope) {
     const w = arrowCanvas.width, h = arrowCanvas.height;
+    const cx = w / 2, cy = h / 2;
+    const r  = Math.min(w, h) * 0.42;
     arrowCtx.clearRect(0, 0, w, h);
-    const cx = w / 2, cy = h / 2, r = w * 0.38;
 
-    // Background circle
+    const col = slopeToColor(slope);
+
+    // ── Background circle with intensity fill ──
     arrowCtx.beginPath();
-    arrowCtx.arc(cx, cy, r + 4, 0, Math.PI * 2);
-    const absSlope = Math.abs(slope);
-    let color;
-    if (absSlope < 0.05)        color = '#ffd740';
-    else if (slope > 0)         color = '#69f0ae';  // moving away = green
-    else                        color = '#ff4081';  // moving closer = red
-    arrowCtx.fillStyle = color + '22';
+    arrowCtx.arc(cx, cy, r + 6, 0, Math.PI * 2);
+    arrowCtx.fillStyle = col.solid;
     arrowCtx.fill();
-    arrowCtx.strokeStyle = color + '66';
+    arrowCtx.strokeStyle = col.pure + '88';
     arrowCtx.lineWidth = 2;
     arrowCtx.stroke();
 
-    // Tick marks at 0°, ±45°, ±90°
-    [-90, -45, 0, 45, 90].forEach(deg => {
+    // ── Tick marks ──
+    [-90, -67.5, -45, -22.5, 0, 22.5, 45, 67.5, 90].forEach(deg => {
         const rad = (deg * Math.PI) / 180;
-        const inner = r - 5, outer = r + 2;
+        const isMajor = deg % 45 === 0;
+        const inner = r - (isMajor ? 7 : 4);
+        const outer = r + 1;
         arrowCtx.beginPath();
         arrowCtx.moveTo(cx + Math.cos(rad) * inner, cy + Math.sin(rad) * inner);
         arrowCtx.lineTo(cx + Math.cos(rad) * outer, cy + Math.sin(rad) * outer);
-        arrowCtx.strokeStyle = '#2e3356';
-        arrowCtx.lineWidth = 1.5;
+        arrowCtx.strokeStyle = isMajor ? '#4a5280' : '#2e3356';
+        arrowCtx.lineWidth = isMajor ? 2 : 1;
         arrowCtx.stroke();
     });
 
-    // Arrow
-    const rad = (angleDeg * Math.PI) / 180;
-    const arrowLen = r - 6;
-    const arrowX = cx + Math.cos(rad) * arrowLen;
-    const arrowY = cy + Math.sin(rad) * arrowLen;
+    // ── Full bidirectional arrow ──
+    // Arrow points from center toward the "target" direction and
+    // also extends THROUGH the center to the opposite side (tail)
+    const rad      = (angleDeg * Math.PI) / 180;
+    const tipX     = cx + Math.cos(rad) * (r - 8);
+    const tipY     = cy + Math.sin(rad) * (r - 8);
+    const tailX    = cx - Math.cos(rad) * (r - 18);   // opposite side, slightly shorter
+    const tailY    = cy - Math.sin(rad) * (r - 18);
 
+    // Shaft from tail through center to tip
     arrowCtx.beginPath();
-    arrowCtx.moveTo(cx, cy);
-    arrowCtx.lineTo(arrowX, arrowY);
-    arrowCtx.strokeStyle = color;
-    arrowCtx.lineWidth = 4;
+    arrowCtx.moveTo(tailX, tailY);
+    arrowCtx.lineTo(tipX, tipY);
+    arrowCtx.strokeStyle = col.pure;
+    arrowCtx.lineWidth = 5;
     arrowCtx.lineCap = 'round';
     arrowCtx.stroke();
 
-    // Arrowhead
-    const headLen = 10, headAngle = 0.4;
+    // Arrowhead at tip
+    const headLen = 14, headAngle = 0.42;
     arrowCtx.beginPath();
-    arrowCtx.moveTo(arrowX, arrowY);
-    arrowCtx.lineTo(
-        arrowX - headLen * Math.cos(rad - headAngle),
-        arrowY - headLen * Math.sin(rad - headAngle)
-    );
-    arrowCtx.moveTo(arrowX, arrowY);
-    arrowCtx.lineTo(
-        arrowX - headLen * Math.cos(rad + headAngle),
-        arrowY - headLen * Math.sin(rad + headAngle)
-    );
-    arrowCtx.strokeStyle = color;
-    arrowCtx.lineWidth = 3;
+    arrowCtx.moveTo(tipX, tipY);
+    arrowCtx.lineTo(tipX - headLen * Math.cos(rad - headAngle), tipY - headLen * Math.sin(rad - headAngle));
+    arrowCtx.moveTo(tipX, tipY);
+    arrowCtx.lineTo(tipX - headLen * Math.cos(rad + headAngle), tipY - headLen * Math.sin(rad + headAngle));
+    arrowCtx.strokeStyle = col.pure;
+    arrowCtx.lineWidth = 4;
     arrowCtx.stroke();
 
-    // Center dot
+    // Small tail circle
     arrowCtx.beginPath();
-    arrowCtx.arc(cx, cy, 4, 0, Math.PI * 2);
-    arrowCtx.fillStyle = color;
+    arrowCtx.arc(tailX, tailY, 4, 0, Math.PI * 2);
+    arrowCtx.fillStyle = col.pure + 'aa';
+    arrowCtx.fill();
+
+    // Center pivot dot
+    arrowCtx.beginPath();
+    arrowCtx.arc(cx, cy, 5, 0, Math.PI * 2);
+    arrowCtx.fillStyle = col.pure;
     arrowCtx.fill();
 }
 
 function updateGauges(distFt, slope) {
-    // Distance box
     distReadout.textContent = distFt.toFixed(1);
 
-    // Slope arrow — map slope to angle
-    // slope=0 → 0° (right), slope>0 → negative angle (up), slope<0 → positive angle (down)
+    // Smooth arrow angle: slope=0 → 0° (right), slope>0 → negative (up), slope<0 → down
     const clampedSlope = Math.max(-4, Math.min(4, slope));
-    targetAngleDeg = -clampedSlope * 20; // ±4 ft/s → ±80°
-    // Smooth the angle
-    arrowAngleDeg += (targetAngleDeg - arrowAngleDeg) * 0.25;
+    const targetAngle  = -clampedSlope * 20;   // ±4 ft/s → ±80°
+    arrowAngleDeg     += (targetAngle - arrowAngleDeg) * 0.22;
     drawArrow(arrowAngleDeg, slope);
 
-    // Slope readout text
     const sign = slope >= 0 ? '+' : '';
     slopeReadout.textContent = sign + slope.toFixed(1);
-    slopeReadout.className   = Math.abs(slope) < 0.05 ? 'zero' : slope > 0 ? 'pos' : 'neg';
+    const col = slopeToColor(slope);
+    slopeReadout.className   = col.name;
+    slopeDirLabel.textContent = Math.abs(slope) < 0.05 ? 'constant' : slope > 0 ? 'moving away' : 'moving closer';
 
-    // Direction label
-    const absSlope = Math.abs(slope);
-    if (absSlope < 0.05)  slopeDirLabel.textContent = 'constant';
-    else if (slope > 0)   slopeDirLabel.textContent = 'moving away';
-    else                  slopeDirLabel.textContent = 'moving closer';
-
-    // Video border color (sign of slope)
+    // Video border
     videoWrapper.classList.remove('slope-pos','slope-neg','slope-zero');
-    if (signSlopeOn) {
-        if (absSlope < 0.05)  videoWrapper.classList.add('slope-zero');
-        else if (slope > 0)   videoWrapper.classList.add('slope-pos');
-        else                  videoWrapper.classList.add('slope-neg');
-    }
+    if (signSlopeOn) videoWrapper.classList.add('slope-' + col.name);
 }
 
-// Animate arrow even when not tracking (keeps it smooth)
-function arrowLoop() {
-    // Called via rAF inside processVideo, also run idle loop
-    requestAnimationFrame(arrowLoop);
-}
 // Draw initial arrow
 drawArrow(0, 0);
 
@@ -482,89 +476,81 @@ function parseFunction(expr) {
     let e = expr.trim()
         .replace(/^[yY]\s*=\s*/, '')
         .replace(/^f\s*\(\s*x\s*\)\s*=\s*/, '');
-
-    // Absolute value bars
     e = e.replace(/\|([^|]+)\|/g, 'Math.abs($1)');
-
-    // Implicit multiplication
     e = e.replace(/(\d)(x)/gi,  '$1*x');
     e = e.replace(/(\d)\(/g,    '$1*(');
     e = e.replace(/\)(x)/gi,    ')*x');
     e = e.replace(/\)(\d)/g,    ')*$1');
     e = e.replace(/x\(/gi,      'x*(');
     e = e.replace(/(x)(\d)/gi,  'x*$1');
-
-    // Powers: x^2 → Math.pow(x,2)
     e = e.replace(/([a-zA-Z0-9_\.]+|\))\s*\^\s*([a-zA-Z0-9_\.]+|\()/g, 'Math.pow($1,$2)');
-
-    // e constant
-    e = e.replace(/\be\b/g, 'Math.E');
-
-    // Math functions
-    e = e.replace(/\bsqrt\b/g,  'Math.sqrt');
-    e = e.replace(/\babs\b/g,   'Math.abs');
-    e = e.replace(/\bsin\b/g,   'Math.sin');
-    e = e.replace(/\bcos\b/g,   'Math.cos');
-    e = e.replace(/\bln\b/g,    'Math.log');
-    e = e.replace(/\blog\b/g,   'Math.log10');
-    e = e.replace(/\bpi\b/gi,   'Math.PI');
-
+    e = e.replace(/\be\b/g,    'Math.E');
+    e = e.replace(/\bsqrt\b/g, 'Math.sqrt');
+    e = e.replace(/\babs\b/g,  'Math.abs');
+    e = e.replace(/\bsin\b/g,  'Math.sin');
+    e = e.replace(/\bcos\b/g,  'Math.cos');
+    e = e.replace(/\bln\b/g,   'Math.log');
+    e = e.replace(/\blog\b/g,  'Math.log10');
+    e = e.replace(/\bpi\b/gi,  'Math.PI');
     try {
         const fn   = new Function('x', `"use strict"; return (${e});`);
         const test = fn(1);
-        if (typeof test !== 'number' || isNaN(test)) throw new Error("Result is not a number");
+        if (typeof test !== 'number' || isNaN(test)) throw new Error("Not a number");
         return fn;
-    } catch(err) {
-        throw new Error("Could not parse: " + err.message);
+    } catch(err) { throw new Error("Parse error: " + err.message); }
+}
+
+function plotFnSlot(i) {
+    const input = FN_INPUTS[i];
+    const expr  = input.value.trim();
+    if (!expr) return;
+    input.classList.remove('error');
+    fnGlobalError.textContent = '';
+    try {
+        fnFunctions[i] = parseFunction(expr);
+        plotFnOverlay(i);
+        chart.update();
+        // Update RMSE
+        if (i === 0 && data.length) updateStatsRow(null);
+    } catch(e) {
+        fnGlobalError.textContent = `⚠ y= (${i+1}): ${e.message}`;
+        input.classList.add('error');
+        fnFunctions[i] = null;
     }
 }
 
-fnPlotBtn.onclick = () => {
-    const expr = fnInput.value.trim();
-    if (!expr) return;
-    fnError.textContent = '';
-    fnInput.classList.remove('error');
-    try {
-        currentFn = parseFunction(expr);
-        plotFunctionOverlay();
-        rebuildChart();
-    } catch(e) {
-        fnError.textContent = '⚠ ' + e.message;
-        fnInput.classList.add('error');
-        currentFn = null;
-    }
-};
-
-fnClearBtn.onclick = () => {
-    currentFn = null;
-    fnInput.value = '';
-    fnError.textContent = '';
-    fnInput.classList.remove('error');
-    chart.data.datasets[1].data   = [];
-    chart.data.datasets[1].hidden = true;
-    rmseDisplay.style.display = 'none';
+function clearFnSlot(i) {
+    fnFunctions[i] = null;
+    FN_INPUTS[i].value = '';
+    FN_INPUTS[i].classList.remove('error');
+    fnGlobalError.textContent = '';
+    // Clear the dataset
+    const ds = chart.data.datasets.find(d => d.label === FN_DATASET_LABELS[i]);
+    if (ds) { ds.data = []; ds.hidden = true; }
     chart.update();
-};
+}
 
-function plotFunctionOverlay() {
-    if (!currentFn) return;
+function plotFnOverlay(i) {
+    const fn = fnFunctions[i];
+    if (!fn) return;
     const xMax = chart.options.scales.x.max || 5;
     const pts  = [];
     for (let t = 0; t <= xMax + 0.001; t += 0.05) {
-        try {
-            const y = currentFn(t);
-            if (isFinite(y)) pts.push({ x: parseFloat(t.toFixed(3)), y: parseFloat(y.toFixed(4)) });
-        } catch(e) {}
+        try { const y = fn(t); if (isFinite(y)) pts.push({ x: parseFloat(t.toFixed(3)), y: parseFloat(y.toFixed(4)) }); } catch(e) {}
     }
-    chart.data.datasets[1].data   = pts;
-    chart.data.datasets[1].hidden = false;
-    chart.update();
-    if (data.length) {
-        const rmse = calcRmse(data, currentFn);
-        statRmse.textContent = rmse.toFixed(4) + ' ft';
-        rmseDisplay.style.display = 'flex';
-        statsRow.style.display = 'flex';
+    // Find or create dataset
+    let ds = chart.data.datasets.find(d => d.label === FN_DATASET_LABELS[i]);
+    if (!ds) {
+        ds = {
+            label: FN_DATASET_LABELS[i], data: [],
+            borderColor: FN_COLORS[i], backgroundColor: 'transparent',
+            borderWidth: 2.5, borderDash: [6,3], pointRadius: 0, fill: false, tension: 0
+        };
+        chart.data.datasets.push(ds);
     }
+    ds.data   = pts;
+    ds.hidden = false;
+    ds.borderColor = FN_COLORS[i];
 }
 
 // ════════════════════════════════════════════════
@@ -592,17 +578,17 @@ cameraBtn.onclick = function () {
 };
 
 // ════════════════════════════════════════════════
-// SMOOTHING — fixed at 15 samples (FIX #5)
+// SMOOTHING (fixed 15)
 // ════════════════════════════════════════════════
 const SMOOTH_N = 15;
 function smooth(value) {
     smoothBuffer.push(value);
     if (smoothBuffer.length > SMOOTH_N) smoothBuffer.shift();
-    return smoothBuffer.reduce((a, b) => a + b) / smoothBuffer.length;
+    return smoothBuffer.reduce((a,b) => a+b) / smoothBuffer.length;
 }
 
 // ════════════════════════════════════════════════
-// SLOPE CALCULATION
+// SLOPE
 // ════════════════════════════════════════════════
 function calcSlope(t, distFt) {
     slopeBuffer.push({ t, d: distFt });
@@ -616,45 +602,36 @@ function calcSlope(t, distFt) {
 }
 
 // ════════════════════════════════════════════════
-// PROCESS VIDEO FRAME — FIX #3: correct overlay scaling
+// PROCESS VIDEO
 // ════════════════════════════════════════════════
 function processVideo() {
     if (!video.videoWidth) { requestAnimationFrame(processVideo); return; }
-
-    // Draw video at NATIVE resolution into canvas
     const vw = video.videoWidth, vh = video.videoHeight;
     overlay.width = vw; overlay.height = vh;
     ctx.drawImage(video, 0, 0, vw, vh);
-
     const imageData = ctx.getImageData(0, 0, vw, vh);
     const markers   = detector.detect(imageData);
     ctx.clearRect(0, 0, vw, vh);
 
     if (markers.length > 0) {
         const corners = markers[0].corners;
-
-        // Draw in native pixel coords — canvas CSS stretches it correctly
-        ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = Math.max(2, vw / 200);
+        ctx.strokeStyle = "#00e5ff";
+        ctx.lineWidth   = Math.max(2, vw / 200);
         ctx.beginPath();
         corners.forEach((c, i) => i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y));
         ctx.closePath(); ctx.stroke();
-
         const dotR = Math.max(4, vw / 120);
         ctx.fillStyle = "#ff4081";
         corners.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, dotR, 0, Math.PI*2); ctx.fill(); });
 
-        // Pixel width using adjacent corners (top-left to top-right)
-        const widthPixels = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
-        lastKnownPixelWidth = widthPixels;
-
-        const distCm = smooth((parseFloat(markerSizeInput.value) * focalLength) / widthPixels);
+        const widthPx = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
+        lastKnownPixelWidth = widthPx;
+        const distCm = smooth((parseFloat(markerSizeInput.value) * focalLength) / widthPx);
         const distFt = distCm / 30.48;
 
         distBadge.innerText = distFt.toFixed(2) + " ft";
-
         const now   = (Date.now() - startTime) / 1000;
         const slope = calcSlope(now, distFt);
-
         updateGauges(distFt, slope);
         updateLiveStats(distFt, slope);
 
@@ -744,8 +721,15 @@ function beginRecording() {
     statusDot.classList.add("recording");
     chart.options.scales.x.max = parseFloat(xAxisDurationInput.value) || 5;
     // Ghost previous run
-    fadeOldDatasets();
-    // Fresh motion dataset
+    const prev = chart.data.datasets[0];
+    if (prev && prev.data && prev.data.length > 0) {
+        chart.data.datasets.push({
+            label: 'Prev', data: prev.data.slice(),
+            borderColor: 'rgba(0,229,255,0.18)', backgroundColor: 'transparent',
+            borderWidth: 1, pointRadius: 0, fill: false, tension: 0.3
+        });
+    }
+    // Fresh motion dataset at index 0
     chart.data.datasets[0] = {
         label: 'Motion', data: [],
         borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.07)',
@@ -754,18 +738,6 @@ function beginRecording() {
         segment: { borderColor: seg => getSegmentColor(seg) }
     };
     chart.update();
-}
-
-function fadeOldDatasets() {
-    const current = chart.data.datasets[0];
-    if (current && current.data && current.data.length > 0) {
-        const ghost = {
-            label: 'Prev run', data: current.data.slice(),
-            borderColor: 'rgba(0,229,255,0.2)', backgroundColor: 'transparent',
-            borderWidth: 1, pointRadius: 0, fill: false, tension: 0.3
-        };
-        chart.data.datasets.push(ghost);
-    }
 }
 
 function stopRecording() {
@@ -777,11 +749,7 @@ function stopRecording() {
 }
 
 stopBtn.onclick = function () {
-    if (countingDown) {
-        clearInterval(countdownTimer);
-        countdownOverlay.classList.remove("visible");
-        countingDown = false; startBtn.disabled = false;
-    }
+    if (countingDown) { clearInterval(countdownTimer); countdownOverlay.classList.remove("visible"); countingDown = false; startBtn.disabled = false; }
     if (recording) stopRecording();
     smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
 };
@@ -789,11 +757,12 @@ stopBtn.onclick = function () {
 clearBtn.onclick = function () {
     if (countingDown) { clearInterval(countdownTimer); countdownOverlay.classList.remove("visible"); countingDown = false; }
     recording = false; startBtn.disabled = false; data = [];
-    // Reset to 3 core datasets only
-    chart.data.datasets = chart.data.datasets.slice(0, 3);
+    // Keep only first 2 core datasets (motion + regression), clear fn overlays
+    chart.data.datasets = chart.data.datasets.slice(0, 2);
     chart.data.datasets[0].data = [];
     chart.data.datasets[1].data = []; chart.data.datasets[1].hidden = true;
-    chart.data.datasets[2].data = []; chart.data.datasets[2].hidden = true;
+    // Re-add fn overlay placeholders
+    ensureFnDatasets();
     chart.update();
     statsRow.style.display = 'none';
     smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
@@ -804,11 +773,12 @@ clearBtn.onclick = function () {
 exportBtn.onclick = function () {
     if (!data.length) { alert("No data to export!"); return; }
     let csv = "time_seconds,distance_ft";
-    if (currentFn) csv += ",fn_value,residual";
+    const activeFns = fnFunctions.map((f,i) => f ? i : -1).filter(i => i >= 0);
+    activeFns.forEach(i => { csv += `,fn${i+1}_value,fn${i+1}_residual`; });
     csv += "\n";
     data.forEach(([t, d]) => {
         let row = `${t},${d}`;
-        if (currentFn) { const fv = currentFn(t); row += `,${fv.toFixed(4)},${(d - fv).toFixed(4)}`; }
+        activeFns.forEach(i => { const fv = fnFunctions[i](t); row += `,${fv.toFixed(4)},${(d-fv).toFixed(4)}`; });
         csv += row + "\n";
     });
     const blob = new Blob([csv], { type: "text/csv" });
@@ -823,129 +793,95 @@ tableBtn.onclick = () => { if (!data.length) { alert("No data yet!"); return; } 
 closeTableBtn.onclick = () => tableModal.classList.remove("visible");
 
 function buildTable() {
-    const hasFn   = !!currentFn;
-    const samples = sampleAtIntervals(data, 0.5);
-    const reg     = data.length >= 3 ? linearRegression(data) : null;
+    const activeFns = fnFunctions.map((f,i) => f ? i : -1).filter(i => i >= 0);
+    const samples   = sampleAtIntervals(data, 0.5);
+    const reg       = data.length >= 3 ? linearRegression(data) : null;
     valTable.querySelector('thead').innerHTML = `<tr>
-        <th>Time (s)</th><th>Distance (ft)</th>
-        ${reg  ? '<th>Reg. y</th><th>Reg. Resid.</th>' : ''}
-        ${hasFn ? '<th>f(x)</th><th>f(x) Resid.</th>' : ''}
+        <th>t (s)</th><th>Distance (ft)</th>
+        ${reg ? '<th>Reg. y</th><th>Res.</th>' : ''}
+        ${activeFns.map(i => `<th>f${i+1}(x)</th><th>Res.</th>`).join('')}
     </tr>`;
     const tbody = valTable.querySelector('tbody');
     tbody.innerHTML = '';
     samples.forEach(({ x: t, y: d }) => {
         const regY = reg ? reg.m * t + reg.b : null;
-        const fnY  = hasFn ? currentFn(t) : null;
-        const regRes = regY !== null ? d - regY : null;
-        const fnRes  = fnY  !== null ? d - fnY  : null;
-        const cls = r => r === null ? '' : Math.abs(r) < 0.1 ? 'good' : Math.abs(r) < 0.3 ? 'ok' : 'miss';
-        const fmt = v => v !== null ? `${v >= 0 ? '+' : ''}${v.toFixed(3)}` : '';
+        const regR = regY !== null ? d - regY : null;
+        const cls  = r => r === null ? '' : Math.abs(r) < 0.1 ? 'good' : Math.abs(r) < 0.3 ? 'ok' : 'miss';
+        const fmt  = v => v !== null ? `${v >= 0 ? '+' : ''}${v.toFixed(3)}` : '';
+        const fnCells = activeFns.map(i => {
+            const fv = fnFunctions[i](t);
+            const fr = d - fv;
+            return `<td>${fv.toFixed(3)}</td><td class="residual ${cls(fr)}">${fmt(fr)}</td>`;
+        }).join('');
         tbody.innerHTML += `<tr>
             <td>${t.toFixed(2)}</td><td>${d.toFixed(3)}</td>
-            ${reg  ? `<td>${regY.toFixed(3)}</td><td class="residual ${cls(regRes)}">${fmt(regRes)}</td>` : ''}
-            ${hasFn ? `<td>${fnY.toFixed(3)}</td><td class="residual ${cls(fnRes)}">${fmt(fnRes)}</td>` : ''}
+            ${reg ? `<td>${regY.toFixed(3)}</td><td class="residual ${cls(regR)}">${fmt(regR)}</td>` : ''}
+            ${fnCells}
         </tr>`;
     });
     let scoreHTML = '';
     if (reg) scoreHTML += `<span style="color:var(--accent)">R²=${reg.r2.toFixed(4)}</span> &nbsp; <span style="color:var(--muted)">y=${reg.m.toFixed(3)}x${reg.b>=0?'+':''}${reg.b.toFixed(3)}</span>`;
-    if (hasFn && data.length) {
-        const rmse  = calcRmse(data, currentFn);
+    activeFns.forEach(i => {
+        const rmse  = calcRmse(data, fnFunctions[i]);
         const score = Math.max(0, Math.round(100 - rmse * 50));
         const emoji = score >= 90 ? '🏅' : score >= 70 ? '👍' : '📈';
-        scoreHTML += `&nbsp; &nbsp; <span style="color:var(--warn)">RMSE=${rmse.toFixed(3)}ft</span> &nbsp; <span style="color:var(--success)">${emoji} Score: ${score}/100</span>`;
-    }
+        scoreHTML += `&nbsp; &nbsp; <span style="color:${FN_COLORS[i]}">f${i+1}: RMSE=${rmse.toFixed(3)}ft ${emoji}${score}/100</span>`;
+    });
     tableScore.innerHTML = scoreHTML;
 }
 
 // ════════════════════════════════════════════════
-// ARUCO MARKER SCREEN — FIX #2: fills screen, sidebar controls, shows cm size
+// ARUCO MARKER SCREEN
 // ════════════════════════════════════════════════
 const DICT_ORIG = [
-    [0b10001,0b11011,0b01010,0b00001,0b01011],
-    [0b11100,0b11011,0b01110,0b11100,0b10111],
-    [0b01110,0b11011,0b10101,0b01110,0b00100],
-    [0b10110,0b01011,0b11001,0b00110,0b01001],
-    [0b01011,0b10110,0b00111,0b11010,0b11100],
-    [0b11010,0b01101,0b10010,0b10001,0b00011],
-    [0b00111,0b10100,0b11001,0b01110,0b11010],
-    [0b10000,0b00111,0b01101,0b10110,0b01111],
-    [0b01101,0b10010,0b00110,0b01101,0b10010],
-    [0b11001,0b00110,0b10011,0b01100,0b11001],
-    [0b00100,0b11011,0b00111,0b11000,0b10110],
-    [0b10011,0b01100,0b11001,0b10011,0b01100],
-    [0b01001,0b10110,0b01011,0b10100,0b11010],
-    [0b11010,0b10101,0b01010,0b11010,0b00101],
-    [0b00110,0b01101,0b10110,0b01011,0b10100],
-    [0b10101,0b01010,0b10101,0b01010,0b10101],
-    [0b11000,0b00111,0b10011,0b00110,0b11001],
-    [0b01111,0b10000,0b01111,0b10000,0b01111],
-    [0b10010,0b11001,0b00110,0b01011,0b00100],
-    [0b00001,0b11110,0b10101,0b01110,0b10001],
-    [0b11011,0b00100,0b10110,0b01001,0b11101],
-    [0b01010,0b10101,0b01010,0b10101,0b01010],
-    [0b10100,0b01011,0b10100,0b01011,0b10100],
-    [0b00011,0b11100,0b01111,0b00001,0b11110],
-    [0b11100,0b00011,0b10001,0b11110,0b00001],
-    [0b01000,0b10111,0b00010,0b11101,0b01000],
-    [0b10111,0b01000,0b11101,0b00010,0b10111],
-    [0b00101,0b11010,0b01101,0b10010,0b00101],
-    [0b11010,0b00101,0b10010,0b01101,0b11010],
-    [0b01100,0b10011,0b01100,0b10011,0b01100],
-    [0b10001,0b01110,0b10001,0b01110,0b10001],
-    [0b01110,0b10001,0b01110,0b10001,0b01110],
-    [0b11110,0b00001,0b11110,0b00001,0b11110],
-    [0b00001,0b11110,0b00001,0b11110,0b00001],
-    [0b10110,0b11001,0b01101,0b00110,0b10011],
-    [0b01001,0b00110,0b10010,0b11001,0b01100],
-    [0b11101,0b00010,0b01011,0b10100,0b11101],
-    [0b00010,0b11101,0b10100,0b01011,0b00010],
-    [0b10011,0b11100,0b00011,0b11100,0b10011],
-    [0b01100,0b00011,0b11100,0b00011,0b01100],
-    [0b10100,0b10100,0b10100,0b10100,0b10100],
-    [0b01011,0b01011,0b01011,0b01011,0b01011],
-    [0b11000,0b11000,0b11000,0b11000,0b11000],
-    [0b00111,0b00111,0b00111,0b00111,0b00111],
-    [0b10010,0b01001,0b10010,0b01001,0b10010],
-    [0b01101,0b10110,0b01101,0b10110,0b01101],
-    [0b11011,0b00100,0b11011,0b00100,0b11011],
-    [0b00100,0b11011,0b00100,0b11011,0b00100],
-    [0b10101,0b10101,0b10101,0b10101,0b10101],
-    [0b01010,0b01010,0b01010,0b01010,0b01010],
+    [0b10001,0b11011,0b01010,0b00001,0b01011],[0b11100,0b11011,0b01110,0b11100,0b10111],
+    [0b01110,0b11011,0b10101,0b01110,0b00100],[0b10110,0b01011,0b11001,0b00110,0b01001],
+    [0b01011,0b10110,0b00111,0b11010,0b11100],[0b11010,0b01101,0b10010,0b10001,0b00011],
+    [0b00111,0b10100,0b11001,0b01110,0b11010],[0b10000,0b00111,0b01101,0b10110,0b01111],
+    [0b01101,0b10010,0b00110,0b01101,0b10010],[0b11001,0b00110,0b10011,0b01100,0b11001],
+    [0b00100,0b11011,0b00111,0b11000,0b10110],[0b10011,0b01100,0b11001,0b10011,0b01100],
+    [0b01001,0b10110,0b01011,0b10100,0b11010],[0b11010,0b10101,0b01010,0b11010,0b00101],
+    [0b00110,0b01101,0b10110,0b01011,0b10100],[0b10101,0b01010,0b10101,0b01010,0b10101],
+    [0b11000,0b00111,0b10011,0b00110,0b11001],[0b01111,0b10000,0b01111,0b10000,0b01111],
+    [0b10010,0b11001,0b00110,0b01011,0b00100],[0b00001,0b11110,0b10101,0b01110,0b10001],
+    [0b11011,0b00100,0b10110,0b01001,0b11101],[0b01010,0b10101,0b01010,0b10101,0b01010],
+    [0b10100,0b01011,0b10100,0b01011,0b10100],[0b00011,0b11100,0b01111,0b00001,0b11110],
+    [0b11100,0b00011,0b10001,0b11110,0b00001],[0b01000,0b10111,0b00010,0b11101,0b01000],
+    [0b10111,0b01000,0b11101,0b00010,0b10111],[0b00101,0b11010,0b01101,0b10010,0b00101],
+    [0b11010,0b00101,0b10010,0b01101,0b11010],[0b01100,0b10011,0b01100,0b10011,0b01100],
+    [0b10001,0b01110,0b10001,0b01110,0b10001],[0b01110,0b10001,0b01110,0b10001,0b01110],
+    [0b11110,0b00001,0b11110,0b00001,0b11110],[0b00001,0b11110,0b00001,0b11110,0b00001],
+    [0b10110,0b11001,0b01101,0b00110,0b10011],[0b01001,0b00110,0b10010,0b11001,0b01100],
+    [0b11101,0b00010,0b01011,0b10100,0b11101],[0b00010,0b11101,0b10100,0b01011,0b00010],
+    [0b10011,0b11100,0b00011,0b11100,0b10011],[0b01100,0b00011,0b11100,0b00011,0b01100],
+    [0b10100,0b10100,0b10100,0b10100,0b10100],[0b01011,0b01011,0b01011,0b01011,0b01011],
+    [0b11000,0b11000,0b11000,0b11000,0b11000],[0b00111,0b00111,0b00111,0b00111,0b00111],
+    [0b10010,0b01001,0b10010,0b01001,0b10010],[0b01101,0b10110,0b01101,0b10110,0b01101],
+    [0b11011,0b00100,0b11011,0b00100,0b11011],[0b00100,0b11011,0b00100,0b11011,0b00100],
+    [0b10101,0b10101,0b10101,0b10101,0b10101],[0b01010,0b01010,0b01010,0b01010,0b01010],
 ];
 
 function drawMarker(id) {
-    const bits  = DICT_ORIG[id % DICT_ORIG.length];
-    const cells = 7;
-    // Use 88% of the smaller screen dimension
-    const maxPx  = Math.floor(Math.min(window.innerWidth - 130, window.innerHeight) * 0.88);
+    const bits   = DICT_ORIG[id % DICT_ORIG.length];
+    const cells  = 7;
+    const maxPx  = Math.floor(Math.min(window.innerWidth - 140, window.innerHeight) * 0.88);
     const cellPx = Math.floor(maxPx / cells);
     const size   = cells * cellPx;
-    markerCanvas.width  = size;
-    markerCanvas.height = size;
+    markerCanvas.width = size; markerCanvas.height = size;
     const mc = markerCanvas.getContext("2d");
-    mc.fillStyle = '#000';
-    mc.fillRect(0, 0, size, size);
-
+    mc.fillStyle = '#000'; mc.fillRect(0, 0, size, size);
     for (let row = 0; row < cells; row++) {
         for (let col = 0; col < cells; col++) {
             let black;
-            if (row === 0 || row === 6 || col === 0 || col === 6) {
-                black = true;
-            } else {
-                const dataRow = row - 1;
-                const dataCol = col - 1;
-                black = ((bits[dataRow] >> (4 - dataCol)) & 1) === 1;
-            }
+            if (row === 0 || row === 6 || col === 0 || col === 6) { black = true; }
+            else { const dr = row-1, dc = col-1; black = ((bits[dr] >> (4-dc)) & 1) === 1; }
             mc.fillStyle = black ? '#000' : '#fff';
             mc.fillRect(col * cellPx, row * cellPx, cellPx, cellPx);
         }
     }
-
     markerIdLabel.textContent = `ID: ${id}`;
     markerSizePx.textContent  = `${size} × ${size} px`;
-    // Estimate cm size: 96 DPI → 1px ≈ 0.02646 cm
-    const estimatedCm = (size * 0.02646).toFixed(1);
-    markerSizeCm.textContent  = `≈ ${estimatedCm} cm on screen`;
+    markerSizeCm.textContent  = `≈ ${(size * 0.02646).toFixed(1)} cm on screen`;
 }
 
 markerScreenBtn.onclick = () => { markerScreen.classList.add("visible"); drawMarker(0); };
@@ -957,17 +893,17 @@ markerRandomBtn.onclick = () => drawMarker(Math.floor(Math.random() * DICT_ORIG.
 // ════════════════════════════════════════════════
 const CHALLENGES = [
     { description: "Walk at a <span class='target'>constant</span> speed away — target: <span class='target'>+1.0 ft/sec</span>.", targetSlope:  1.0, tolerance: 0.25 },
-    { description: "Hold <span class='target'>perfectly still</span> — target: <span class='target'>0.0 ft/sec</span>.", targetSlope: 0.0, tolerance: 0.10 },
-    { description: "Walk <span class='target'>slowly toward</span> the camera — target: <span class='target'>−0.5 ft/sec</span>.", targetSlope: -0.5, tolerance: 0.20 },
-    { description: "Walk <span class='target'>quickly away</span> — target: <span class='target'>+2.0 ft/sec</span>.", targetSlope:  2.0, tolerance: 0.40 },
-    { description: "Walk <span class='target'>slowly away</span> — target: <span class='target'>+0.5 ft/sec</span>.", targetSlope:  0.5, tolerance: 0.15 },
-    { description: "Move <span class='target'>quickly toward</span> — target: <span class='target'>−1.5 ft/sec</span>.", targetSlope: -1.5, tolerance: 0.40 },
+    { description: "Hold <span class='target'>perfectly still</span> — target: <span class='target'>0.0 ft/sec</span>.",          targetSlope:  0.0, tolerance: 0.10 },
+    { description: "Walk <span class='target'>slowly toward</span> the camera — target: <span class='target'>−0.5 ft/sec</span>.",targetSlope: -0.5, tolerance: 0.20 },
+    { description: "Walk <span class='target'>quickly away</span> — target: <span class='target'>+2.0 ft/sec</span>.",             targetSlope:  2.0, tolerance: 0.40 },
+    { description: "Walk <span class='target'>slowly away</span> — target: <span class='target'>+0.5 ft/sec</span>.",             targetSlope:  0.5, tolerance: 0.15 },
+    { description: "Move <span class='target'>quickly toward</span> — target: <span class='target'>−1.5 ft/sec</span>.",          targetSlope: -1.5, tolerance: 0.40 },
 ];
 
 newChallengeBtn.onclick = function () {
     currentChallenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
     challengeText.innerHTML = currentChallenge.description +
-        `<br><br><em style="color:var(--muted);font-size:0.65rem">Record for ~5s then press Stop or Judge My Run.</em>`;
+        `<br><br><em style="color:var(--muted);font-size:0.63rem">Record ~5s then press Stop or Judge My Run.</em>`;
     challengeScore.textContent = ''; challengeScore.className = '';
 };
 judgeChallengeBtn.onclick = evaluateChallenge;
@@ -979,13 +915,13 @@ function evaluateChallenge() {
     const sign  = reg.m >= 0 ? '+' : '';
     const tgt   = currentChallenge.targetSlope;
     if (error <= currentChallenge.tolerance) {
-        challengeScore.textContent = `🏅 Great! Slope: ${sign}${reg.m.toFixed(2)} ft/s (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.textContent = `🏅 Great! Slope: ${sign}${reg.m.toFixed(2)} (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
         challengeScore.className = 'great';
     } else if (error <= currentChallenge.tolerance * 2) {
-        challengeScore.textContent = `👍 Close! Slope: ${sign}${reg.m.toFixed(2)} ft/s (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.textContent = `👍 Close! Slope: ${sign}${reg.m.toFixed(2)} (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
         challengeScore.className = 'ok';
     } else {
-        challengeScore.textContent = `Keep trying! Slope: ${sign}${reg.m.toFixed(2)} ft/s (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
+        challengeScore.textContent = `Keep trying! Slope: ${sign}${reg.m.toFixed(2)} (target ${tgt>=0?'+':''}${tgt.toFixed(1)})`;
         challengeScore.className = 'miss';
     }
 }

@@ -20,32 +20,32 @@
       --success:    #69f0ae;
       --warn:       #ffd740;
       --border:     #2e3356;
-      --slope-pos:  #69f0ae;   /* green = moving away  */
-      --slope-neg:  #ff4081;   /* red   = moving closer */
+      --slope-pos:  #69f0ae;
+      --slope-neg:  #ff4081;
       --slope-zero: #ffd740;
       --panel-w:    380px;
-      --gauge-w:    110px;
+      --left-w:     260px;   /* video column width */
+      --right-w:    220px;   /* gauge column width — matches left  */
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
 
-    /* ══ APP SHELL ══ */
     #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* ── HEADER ── */
     #header {
       display: flex; align-items: center; gap: 10px;
-      padding: 8px 14px; background: var(--surface);
+      padding: 7px 14px; background: var(--surface);
       border-bottom: 2px solid var(--accent); flex-shrink: 0; z-index: 10;
     }
-    #header h1 { font-family: 'Space Mono', monospace; font-size: 0.95rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; flex: 1; }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+    #header h1 { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; flex: 1; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
     .status-dot.active    { background: var(--success); box-shadow: 0 0 8px var(--success); }
     .status-dot.recording { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); animation: blink 0.8s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .hdr-btn {
       background: none; border: 1px solid var(--border); color: var(--muted);
-      border-radius: 7px; width: 34px; height: 34px; font-size: 1rem;
+      border-radius: 7px; width: 32px; height: 32px; font-size: 0.95rem;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all 0.15s; flex-shrink: 0;
     }
@@ -53,24 +53,27 @@
     .hdr-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
 
     /* ══ MAIN CONTENT ══ */
-    #content { display: flex; flex: 1; overflow: hidden; position: relative; }
+    #content { display: flex; flex: 1; overflow: hidden; }
 
-    /* ── VIDEO COLUMN ── */
-    #videoCol { display: flex; flex-direction: column; gap: 7px; padding: 8px; width: 290px; flex-shrink: 0; }
+    /* ── LEFT: VIDEO COLUMN ── */
+    #videoCol {
+      width: var(--left-w); flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 6px; padding: 8px;
+    }
     #videoWrapper {
       position: relative; background: #000; border-radius: 10px;
       overflow: hidden; border: 3px solid var(--border); flex: 1;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.25s, box-shadow 0.25s;
     }
-    #videoWrapper.slope-pos  { border-color: var(--slope-pos); box-shadow: 0 0 18px rgba(105,240,174,0.3); }
-    #videoWrapper.slope-neg  { border-color: var(--slope-neg); box-shadow: 0 0 18px rgba(255,64,129,0.3); }
-    #videoWrapper.slope-zero { border-color: var(--slope-zero); box-shadow: 0 0 14px rgba(255,215,64,0.2); }
+    #videoWrapper.slope-pos  { border-color: var(--slope-pos); }
+    #videoWrapper.slope-neg  { border-color: var(--slope-neg); }
+    #videoWrapper.slope-zero { border-color: var(--slope-zero); }
     #video   { width: 100%; height: 100%; object-fit: cover; display: block; }
     #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
     #distBadge {
       position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.78); border: 1px solid var(--accent); border-radius: 20px;
-      padding: 3px 14px; font-family: 'Space Mono', monospace; font-size: 0.85rem;
+      background: rgba(0,0,0,0.8); border: 1px solid var(--accent); border-radius: 20px;
+      padding: 3px 12px; font-family: 'Space Mono', monospace; font-size: 0.8rem;
       color: var(--accent); white-space: nowrap; pointer-events: none;
     }
     #camPlaceholder {
@@ -78,8 +81,7 @@
       align-items: center; justify-content: center; gap: 10px;
       color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.7rem;
     }
-    .cam-icon { font-size: 2rem; opacity: 0.35; }
-
+    .cam-icon { font-size: 2rem; opacity: 0.3; }
     /* countdown */
     #countdownOverlay {
       position: absolute; inset: 0; display: none;
@@ -88,24 +90,20 @@
     }
     #countdownOverlay.visible { display: flex; }
     #countdownNum {
-      font-family: 'Space Mono', monospace; font-size: 7rem; font-weight: 700;
-      color: #fff; text-shadow: 0 0 40px var(--accent), 0 0 80px var(--accent);
+      font-family: 'Space Mono', monospace; font-size: 6rem; font-weight: 700;
+      color: #fff; text-shadow: 0 0 40px var(--accent);
       animation: pop 1s ease-out infinite; text-align: center; line-height: 1;
     }
-    #countdownNum.go {
-      font-size: 4.5rem; color: var(--success);
-      text-shadow: 0 0 40px var(--success), 0 0 80px var(--success);
-      animation: popgo 0.8s ease-out forwards;
-    }
+    #countdownNum.go { font-size: 4rem; color: var(--success); text-shadow: 0 0 40px var(--success); animation: popgo 0.8s ease-out forwards; }
     @keyframes pop   { 0%{transform:scale(1.3);opacity:1} 70%{transform:scale(1);opacity:1} 100%{transform:scale(0.92);opacity:0.5} }
     @keyframes popgo { 0%{transform:scale(1.5);opacity:0.2} 30%{transform:scale(1);opacity:1} 100%{transform:scale(1);opacity:1} }
 
-    /* ── ACTION BUTTONS ── */
+    /* action buttons */
     #actionStrip { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
     .abtn {
-      padding: 9px 6px; border: none; border-radius: 8px;
-      font-family: 'Space Mono', monospace; font-size: 0.62rem; font-weight: 700;
-      letter-spacing: 0.4px; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+      padding: 8px 5px; border: none; border-radius: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.3px; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
     }
     .abtn:hover  { filter: brightness(1.15); transform: translateY(-1px); }
     .abtn:active { transform: translateY(0); }
@@ -116,222 +114,175 @@
     .abtn-export { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); grid-column: span 2; }
     .abtn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
 
-    /* ── CHART COLUMN ── */
-    #chartCol { flex: 1; display: flex; flex-direction: column; padding: 8px 0 8px 0; gap: 6px; overflow: hidden; min-width: 0; }
+    /* ── MIDDLE: CHART COLUMN ── */
+    #chartCol { flex: 1; display: flex; flex-direction: column; padding: 8px 4px; gap: 5px; overflow: hidden; min-width: 0; }
     #chartPanel {
       flex: 1; background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
-      padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow: hidden;
+      padding: 10px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
     }
-    .chart-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
-    .chart-title  { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+    .chart-title  { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
     .chart-toggles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .tog-wrap { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
-    .tog { position: relative; width: 34px; height: 19px; }
+    .tog-wrap { display: flex; align-items: center; gap: 5px; font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
+    .tog { position: relative; width: 32px; height: 18px; }
     .tog input { display: none; }
-    .tog-track { position: absolute; inset: 0; background: var(--surface2); border-radius: 10px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
-    .tog-track:before { content: ''; position: absolute; width: 13px; height: 13px; left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
+    .tog-track { position: absolute; inset: 0; background: var(--surface2); border-radius: 9px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; }
+    .tog-track:before { content: ''; position: absolute; width: 12px; height: 12px; left: 2px; top: 2px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
     .tog input:checked + .tog-track { background: var(--accent); border-color: var(--accent); }
-    .tog input:checked + .tog-track:before { transform: translateX(15px); background: #000; }
+    .tog input:checked + .tog-track:before { transform: translateX(14px); background: #000; }
     #chartContainer { flex: 1; position: relative; min-height: 0; }
-
-    /* ── FUNCTION ROW ── */
-    #functionRow {
-      display: flex; align-items: center; gap: 7px; flex-shrink: 0;
-      background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 7px 10px;
-    }
-    #functionRow label { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent); white-space: nowrap; }
-    #fnInput {
-      flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
-      color: var(--text); padding: 5px 8px; font-family: 'Space Mono', monospace; font-size: 0.8rem;
-      outline: none; transition: border-color 0.2s;
-    }
-    #fnInput:focus { border-color: var(--accent); }
-    #fnInput.error { border-color: var(--accent2); }
-    .fn-btn {
-      padding: 5px 10px; border: none; border-radius: 6px;
-      font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700;
-      cursor: pointer; text-transform: uppercase; transition: all 0.15s; white-space: nowrap;
-    }
-    #fnPlotBtn  { background: var(--accent); color: #000; }
-    #fnClearBtn { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
-    #fnError    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--accent2); white-space: nowrap; }
-
-    /* ── STATS ROW ── */
+    /* stats row */
     #statsRow {
-      display: none; align-items: center; gap: 14px; flex-shrink: 0;
+      display: none; align-items: center; gap: 12px; flex-shrink: 0;
       background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
-      padding: 6px 12px; flex-wrap: wrap;
+      padding: 5px 10px; flex-wrap: wrap;
     }
     .stat-item { display: flex; flex-direction: column; gap: 1px; }
-    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.52rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--accent); font-weight: 700; }
-    .stat-val.pos  { color: var(--slope-pos); }
-    .stat-val.neg  { color: var(--slope-neg); }
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.48rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--accent); font-weight: 700; }
+    .stat-val.pos { color: var(--slope-pos); }
+    .stat-val.neg { color: var(--slope-neg); }
     #rmseDisplay { display: none; }
 
-    /* ══ RIGHT GAUGE COLUMN ══ */
-    #gaugeCol {
-      width: var(--gauge-w);
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px 8px 8px 4px;
+    /* ── RIGHT: GAUGE + FUNCTION COLUMN ── */
+    #rightCol {
+      width: var(--right-w); flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 8px 4px;
     }
 
-    /* Distance gauge box */
+    /* Distance gauge */
     #distGauge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 6px;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px;
       flex-shrink: 0;
     }
-    .gauge-label {
-      font-family: 'Space Mono', monospace; font-size: 0.48rem;
-      letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
-      text-align: center;
-    }
-    #distReadout {
-      font-family: 'Space Mono', monospace; font-weight: 700;
-      font-size: 2rem; color: var(--accent); line-height: 1; text-align: center;
-    }
-    #distUnit {
-      font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted);
-    }
+    .gauge-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    #distReadout { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 3.2rem; color: var(--accent); line-height: 1; text-align: center; }
+    #distUnit    { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); }
 
-    /* Slope arrow gauge box */
+    /* Slope arrow gauge */
     #slopeGauge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 6px;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      flex: 1;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+      flex: 1; min-height: 0;
     }
-    #arrowCanvas {
-      width: 80px; height: 80px;
-      flex-shrink: 0;
-    }
+    #arrowCanvas { width: 100%; max-width: 180px; flex-shrink: 0; }
     #slopeReadout {
-      font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700;
-      text-align: center; line-height: 1.2;
+      font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700;
+      text-align: center; line-height: 1;
     }
     #slopeReadout.pos  { color: var(--slope-pos); }
     #slopeReadout.neg  { color: var(--slope-neg); }
     #slopeReadout.zero { color: var(--slope-zero); }
-    #slopeDirLabel {
-      font-family: 'Space Mono', monospace; font-size: 0.48rem;
-      color: var(--muted); text-align: center; letter-spacing: 1px; text-transform: uppercase;
+    #slopeDirLabel { font-family: 'Space Mono', monospace; font-size: 0.5rem; color: var(--muted); text-align: center; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── FUNCTION BOX ── */
+    #fnBox {
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: 12px; padding: 12px 10px; flex-shrink: 0;
     }
+    #fnBox h3 {
+      font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .fn-entry-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .fn-color-dot {
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .fn-label { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--accent); white-space: nowrap; }
+    .fn-text-input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px;
+      color: var(--text); padding: 5px 7px; font-family: 'Space Mono', monospace; font-size: 0.78rem;
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .fn-text-input:focus { border-color: var(--accent); }
+    .fn-text-input.error { border-color: var(--accent2); }
+    .fn-plot-btn {
+      padding: 5px 8px; border: none; border-radius: 5px;
+      font-family: 'Space Mono', monospace; font-size: 0.6rem; font-weight: 700;
+      cursor: pointer; text-transform: uppercase; transition: all 0.15s; white-space: nowrap;
+      background: var(--accent); color: #000;
+    }
+    .fn-plot-btn:hover { filter: brightness(1.1); }
+    .fn-clear-btn {
+      padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px;
+      background: var(--surface2); color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 0.6rem; cursor: pointer;
+    }
+    #fnGlobalError { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent2); margin-top: 4px; min-height: 1em; }
 
     /* ── SETTINGS PANEL ── */
     #settingsPanel {
       position: fixed; top: 0; right: 0; width: var(--panel-w); height: 100vh;
       background: var(--surface); border-left: 2px solid var(--accent);
       z-index: 100; display: flex; flex-direction: column;
-      transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-      overflow-y: auto;
+      transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); overflow-y: auto;
     }
     #settingsPanel.open { transform: translateX(0); }
     #panelOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; display: none; }
     #panelOverlay.visible { display: block; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .panel-header h2 { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+    .panel-header h2 { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
     .close-btn { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; transition: color 0.15s; }
     .close-btn:hover { color: var(--accent2); }
     .panel-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-    .panel-section h3 { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 11px; }
+    .panel-section h3 { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
     .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
-    .field label { font-size: 0.7rem; color: var(--muted); }
+    .field label { font-size: 0.68rem; color: var(--muted); }
     .field input[type=number] {
       background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
       color: var(--text); padding: 6px 9px; font-family: 'Space Mono', monospace;
-      font-size: 0.8rem; width: 100%; outline: none; transition: border-color 0.2s;
+      font-size: 0.78rem; width: 100%; outline: none; transition: border-color 0.2s;
     }
     .field input[type=number]:focus { border-color: var(--accent); }
-    .btn-cal {
-      width: 100%; padding: 8px; background: transparent; border: 1px solid var(--accent);
-      color: var(--accent); border-radius: 8px; font-family: 'Space Mono', monospace;
-      font-size: 0.7rem; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
-    }
+    .btn-cal { width: 100%; padding: 8px; background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
     .btn-cal:hover { background: var(--accent); color: #000; }
-    #calStatus { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-top: 6px; }
+    #calStatus { font-family: 'Space Mono', monospace; font-size: 0.63rem; color: var(--muted); margin-top: 6px; }
     #calStatus.ok { color: var(--success); }
-    .challenge-box {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 11px; margin-bottom: 9px; font-family: 'Space Mono', monospace;
-      font-size: 0.7rem; color: var(--text); line-height: 1.65;
-    }
+    .challenge-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--text); line-height: 1.6; }
     .challenge-box .target { color: var(--accent); font-weight: 700; }
-    #challengeScore { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted); min-height: 1.1em; margin-bottom: 7px; }
+    #challengeScore { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); min-height: 1em; margin-bottom: 6px; }
     #challengeScore.great { color: var(--success); }
     #challengeScore.ok    { color: var(--warn); }
     #challengeScore.miss  { color: var(--accent2); }
-    .btn-ch {
-      width: 100%; padding: 7px; background: transparent; border: 1px solid var(--muted);
-      color: var(--muted); border-radius: 7px; font-family: 'Space Mono', monospace;
-      font-size: 0.65rem; cursor: pointer; text-transform: uppercase; transition: all 0.18s; margin-top: 5px;
-    }
+    .btn-ch { width: 100%; padding: 7px; background: transparent; border: 1px solid var(--muted); color: var(--muted); border-radius: 7px; font-family: 'Space Mono', monospace; font-size: 0.63rem; cursor: pointer; text-transform: uppercase; transition: all 0.18s; margin-top: 5px; }
     .btn-ch:hover { border-color: var(--accent); color: var(--accent); }
     .btn-ch.judge { border-color: var(--success); color: var(--success); }
     .btn-ch.judge:hover { background: var(--success); color: #000; }
     .view-mode-group { display: flex; gap: 5px; }
-    .vm-btn {
-      flex: 1; padding: 6px 4px; background: var(--surface2); border: 1px solid var(--border);
-      color: var(--muted); border-radius: 6px; font-family: 'Space Mono', monospace;
-      font-size: 0.6rem; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center;
-    }
+    .vm-btn { flex: 1; padding: 6px 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-family: 'Space Mono', monospace; font-size: 0.58rem; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center; }
     .vm-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
-    .inst-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .inst-list li { font-size: 0.74rem; color: var(--muted); line-height: 1.5; display: flex; gap: 7px; }
-    .inst-list li::before { content: attr(data-n); font-family: 'Space Mono', monospace; color: var(--accent); font-size: 0.62rem; background: rgba(0,229,255,0.1); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; margin-top: 2px; }
+    .inst-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+    .inst-list li { font-size: 0.72rem; color: var(--muted); line-height: 1.5; display: flex; gap: 7px; }
+    .inst-list li::before { content: attr(data-n); font-family: 'Space Mono', monospace; color: var(--accent); font-size: 0.6rem; background: rgba(0,229,255,0.1); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; margin-top: 2px; }
     .inst-list li strong { color: var(--text); }
 
-    /* ── VALUES TABLE ── */
-    #tableModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
+    /* ── VALUES TABLE MODAL ── */
+    #tableModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 200; align-items: center; justify-content: center; }
     #tableModal.visible { display: flex; }
-    #tableBox { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 20px; max-width: 620px; width: 90%; max-height: 82vh; display: flex; flex-direction: column; gap: 12px; }
-    #tableBox h3 { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; }
+    #tableBox { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 20px; max-width: 640px; width: 92%; max-height: 82vh; display: flex; flex-direction: column; gap: 12px; }
+    #tableBox h3 { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--accent); letter-spacing: 2px; }
     #tableScroll { overflow-y: auto; flex: 1; }
-    table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 0.72rem; }
-    th { color: var(--accent); padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; font-size: 0.62rem; letter-spacing: 1px; }
+    table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 0.7rem; }
+    th { color: var(--accent); padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; font-size: 0.6rem; letter-spacing: 1px; }
     td { color: var(--text); padding: 5px 10px; border-bottom: 1px solid var(--surface2); }
     td.residual.good { color: var(--success); }
     td.residual.ok   { color: var(--warn); }
     td.residual.miss { color: var(--accent2); }
-    #tableScore { font-family: 'Space Mono', monospace; font-size: 0.72rem; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
-    .close-table { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 14px; font-family: 'Space Mono', monospace; font-size: 0.65rem; cursor: pointer; }
+    #tableScore { font-family: 'Space Mono', monospace; font-size: 0.7rem; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
+    .close-table { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 14px; font-family: 'Space Mono', monospace; font-size: 0.63rem; cursor: pointer; }
 
     /* ── ARUCO MARKER SCREEN ── */
-    #markerScreen {
-      display: none; position: fixed; inset: 0; background: #000;
-      z-index: 300;
-    }
+    #markerScreen { display: none; position: fixed; inset: 0; background: #000; z-index: 300; }
     #markerScreen.visible { display: flex; }
-    /* Marker fills the screen; controls float on the right side */
-    #markerCanvasWrap {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-    }
+    #markerCanvasWrap { flex: 1; display: flex; align-items: center; justify-content: center; }
     #markerCanvas { image-rendering: pixelated; display: block; }
-    #markerSidebar {
-      width: 120px; flex-shrink: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; padding: 20px 12px; background: rgba(255,255,255,0.04);
-      border-left: 1px solid #222;
-    }
-    .mctrl-btn {
-      width: 100%; padding: 12px 8px; border-radius: 8px; font-family: 'Space Mono', monospace;
-      font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase;
-      border: none; text-align: center; line-height: 1.4;
-    }
+    #markerSidebar { width: 130px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px 12px; background: rgba(255,255,255,0.03); border-left: 1px solid #222; }
+    .mctrl-btn { width: 100%; padding: 12px 8px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 0.63rem; font-weight: 700; cursor: pointer; text-transform: uppercase; border: none; text-align: center; line-height: 1.4; }
     #markerBackBtn   { background: var(--accent2); color: #fff; }
     #markerRandomBtn { background: var(--accent);  color: #000; }
-    #markerInfoBox {
-      font-family: 'Space Mono', monospace; font-size: 0.6rem;
-      color: #666; text-align: center; line-height: 1.8;
-    }
+    #markerInfoBox   { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: #666; text-align: center; line-height: 2; }
     #markerInfoBox span { color: #aaa; display: block; }
   </style>
 </head>
@@ -342,7 +293,7 @@
   <div id="header">
     <div class="status-dot" id="statusDot"></div>
     <h1>Motion Grapher</h1>
-    <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope on graph">🎨</button>
+    <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope colors">🎨</button>
     <button class="hdr-btn" id="markerScreenBtn"    title="ArUco Marker Screen">🖥️</button>
     <button class="hdr-btn" id="tableBtn"           title="Values Table">📋</button>
     <button class="hdr-btn" id="settingsOpenBtn"    title="Settings">⚙️</button>
@@ -351,7 +302,7 @@
   <!-- MAIN -->
   <div id="content">
 
-    <!-- VIDEO COLUMN -->
+    <!-- LEFT: VIDEO -->
     <div id="videoCol">
       <div id="videoWrapper">
         <div id="camPlaceholder"><div class="cam-icon">📷</div><span>Camera not started</span></div>
@@ -369,7 +320,7 @@
       </div>
     </div>
 
-    <!-- CHART COLUMN -->
+    <!-- MIDDLE: CHART -->
     <div id="chartCol">
       <div id="chartPanel">
         <div class="chart-header">
@@ -387,8 +338,6 @@
         </div>
         <div id="chartContainer"><canvas id="chart"></canvas></div>
       </div>
-
-      <!-- STATS ROW -->
       <div id="statsRow">
         <div class="stat-item"><div class="stat-label">Slope</div><div class="stat-val" id="statSlope">--</div></div>
         <div class="stat-item"><div class="stat-label">Distance</div><div class="stat-val" id="statDist">--</div></div>
@@ -396,37 +345,55 @@
         <div class="stat-item"><div class="stat-label">Regression</div><div class="stat-val" id="statReg">--</div></div>
         <div class="stat-item" id="rmseDisplay"><div class="stat-label">RMSE vs f(x)</div><div class="stat-val" id="statRmse">--</div></div>
       </div>
-
-      <!-- FUNCTION ROW -->
-      <div id="functionRow">
-        <label>y =</label>
-        <input type="text" id="fnInput" placeholder="e.g.  2x + 1  or  3x^2 - 1  or  2^x">
-        <button class="fn-btn" id="fnPlotBtn">Plot f(x)</button>
-        <button class="fn-btn" id="fnClearBtn">Clear f(x)</button>
-        <span id="fnError"></span>
-      </div>
     </div>
 
-    <!-- RIGHT GAUGE COLUMN -->
-    <div id="gaugeCol">
+    <!-- RIGHT: GAUGES + FUNCTION BOX -->
+    <div id="rightCol">
 
-      <!-- Distance Box -->
+      <!-- Distance gauge -->
       <div id="distGauge">
-        <div class="gauge-label">Distance</div>
+        <div class="gauge-label">Distance from Camera</div>
         <div id="distReadout">--</div>
         <div id="distUnit">feet</div>
       </div>
 
-      <!-- Slope Arrow Box -->
+      <!-- Slope arrow gauge -->
       <div id="slopeGauge">
-        <div class="gauge-label">Slope</div>
-        <canvas id="arrowCanvas" width="80" height="80"></canvas>
+        <div class="gauge-label">Slope (ft / sec)</div>
+        <canvas id="arrowCanvas" width="180" height="180"></canvas>
         <div id="slopeReadout" class="zero">+0.0</div>
-        <div class="gauge-label">ft / sec</div>
         <div id="slopeDirLabel">constant</div>
       </div>
 
-    </div>
+      <!-- Multi-equation function box -->
+      <div id="fnBox">
+        <h3>📐 Functions  y = f(x)</h3>
+        <!-- Three equation slots with different colors -->
+        <div class="fn-entry-row">
+          <div class="fn-color-dot" style="background:#ffd740"></div>
+          <span class="fn-label">y =</span>
+          <input class="fn-text-input" id="fn1Input" placeholder="2x + 1">
+          <button class="fn-plot-btn" data-fn="1">Plot</button>
+          <button class="fn-clear-btn" data-fn="1">✕</button>
+        </div>
+        <div class="fn-entry-row">
+          <div class="fn-color-dot" style="background:#ff4081"></div>
+          <span class="fn-label">y =</span>
+          <input class="fn-text-input" id="fn2Input" placeholder="3x^2 - 1">
+          <button class="fn-plot-btn" data-fn="2">Plot</button>
+          <button class="fn-clear-btn" data-fn="2">✕</button>
+        </div>
+        <div class="fn-entry-row">
+          <div class="fn-color-dot" style="background:#b39ddb"></div>
+          <span class="fn-label">y =</span>
+          <input class="fn-text-input" id="fn3Input" placeholder="2^x">
+          <button class="fn-plot-btn" data-fn="3">Plot</button>
+          <button class="fn-clear-btn" data-fn="3">✕</button>
+        </div>
+        <div id="fnGlobalError"></div>
+      </div>
+
+    </div><!-- /rightCol -->
 
   </div><!-- /content -->
 </div><!-- /app -->
@@ -449,7 +416,7 @@
     <h3>Recording</h3>
     <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
     <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
-    <div class="field"><label>X-axis duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
+    <div class="field"><label>X-axis Duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
   </div>
   <div class="panel-section">
     <h3>Graph Display Mode</h3>
@@ -470,10 +437,10 @@
     <h3>How To Use</h3>
     <ul class="inst-list">
       <li data-n="1"><span><strong>Start Camera</strong> — allow permission</span></li>
-      <li data-n="2"><span>Hold 20 cm marker up — no calibration needed</span></li>
+      <li data-n="2"><span>Hold 20 cm marker — no calibration needed</span></li>
       <li data-n="3"><span>Press <strong>Record</strong> and move toward/away</span></li>
-      <li data-n="4"><span>Type a function in <strong>y =</strong> to overlay or match</span></li>
-      <li data-n="5"><span>Press <strong>📋</strong> for values table &amp; score</span></li>
+      <li data-n="4"><span>Type functions in the <strong>y=f(x)</strong> box to overlay</span></li>
+      <li data-n="5"><span>Press <strong>📋</strong> for values table &amp; match score</span></li>
     </ul>
   </div>
 </div>
@@ -490,12 +457,10 @@
 
 <!-- ARUCO MARKER SCREEN -->
 <div id="markerScreen">
-  <div id="markerCanvasWrap">
-    <canvas id="markerCanvas"></canvas>
-  </div>
+  <div id="markerCanvasWrap"><canvas id="markerCanvas"></canvas></div>
   <div id="markerSidebar">
-    <button class="mctrl-btn" id="markerBackBtn">← Back to Grapher</button>
-    <button class="mctrl-btn" id="markerRandomBtn">↻ Random Marker</button>
+    <button class="mctrl-btn" id="markerBackBtn">← Back</button>
+    <button class="mctrl-btn" id="markerRandomBtn">↻ Random</button>
     <div id="markerInfoBox">
       <span id="markerIdLabel">ID: 0</span>
       <span id="markerSizePx"></span>
