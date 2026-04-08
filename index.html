@@ -20,24 +20,23 @@
       --success:    #69f0ae;
       --warn:       #ffd740;
       --border:     #2e3356;
-      --slope-pos:  #69f0ae;
-      --slope-neg:  #ff4081;
+      --slope-pos:  #69f0ae;   /* green = moving away  */
+      --slope-neg:  #ff4081;   /* red   = moving closer */
       --slope-zero: #ffd740;
       --panel-w:    380px;
+      --gauge-w:    110px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
 
-    /* ── APP SHELL ── */
+    /* ══ APP SHELL ══ */
     #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* ── HEADER ── */
     #header {
       display: flex; align-items: center; gap: 10px;
-      padding: 8px 14px;
-      background: var(--surface);
-      border-bottom: 2px solid var(--accent);
-      flex-shrink: 0; z-index: 10;
+      padding: 8px 14px; background: var(--surface);
+      border-bottom: 2px solid var(--accent); flex-shrink: 0; z-index: 10;
     }
     #header h1 { font-family: 'Space Mono', monospace; font-size: 0.95rem; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; flex: 1; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
@@ -53,33 +52,11 @@
     .hdr-btn:hover  { border-color: var(--accent); color: var(--accent); }
     .hdr-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
 
-    /* ── BIG DISTANCE DISPLAY ── */
-    #bigDistDisplay {
-      display: none; flex-shrink: 0; padding: 6px 20px;
-      text-align: center; background: var(--surface); border-bottom: 2px solid var(--border);
-    }
-    .bigdist-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
-    #bigDistVal { font-family: 'Space Mono', monospace; font-size: 2.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
-
-    /* ── SPEEDOMETER BANNER ── */
-    #speedoBanner { display: none; flex-shrink: 0; padding: 8px 20px; text-align: center; background: var(--slope-zero); transition: background 0.2s; }
-    #speedoBanner.pos  { background: var(--slope-pos); }
-    #speedoBanner.neg  { background: var(--slope-neg); }
-    .speedo-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 3px; color: rgba(0,0,0,0.5); text-transform: uppercase; }
-    .speedo-row   { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
-    #slopeVal  { font-family: 'Space Mono', monospace; font-size: 2.6rem; font-weight: 700; color: #000; line-height: 1; }
-    #slopeArrow { font-size: 1.6rem; color: #000; transition: transform 0.2s; }
-    #speedoBanner.pos  #slopeArrow { transform: rotate(-40deg); }
-    #speedoBanner.neg  #slopeArrow { transform: rotate(40deg); }
-    #speedoBanner.zero #slopeArrow { transform: none; }
-    .speedo-unit { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.55); }
-    #slopeDir    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(0,0,0,0.75); font-weight: 700; }
-
-    /* ── MAIN CONTENT ── */
+    /* ══ MAIN CONTENT ══ */
     #content { display: flex; flex: 1; overflow: hidden; position: relative; }
 
     /* ── VIDEO COLUMN ── */
-    #videoCol { display: flex; flex-direction: column; gap: 7px; padding: 8px; width: 300px; flex-shrink: 0; }
+    #videoCol { display: flex; flex-direction: column; gap: 7px; padding: 8px; width: 290px; flex-shrink: 0; }
     #videoWrapper {
       position: relative; background: #000; border-radius: 10px;
       overflow: hidden; border: 3px solid var(--border); flex: 1;
@@ -140,7 +117,7 @@
     .abtn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
 
     /* ── CHART COLUMN ── */
-    #chartCol { flex: 1; display: flex; flex-direction: column; padding: 8px 8px 8px 0; gap: 6px; overflow: hidden; min-width: 0; }
+    #chartCol { flex: 1; display: flex; flex-direction: column; padding: 8px 0 8px 0; gap: 6px; overflow: hidden; min-width: 0; }
     #chartPanel {
       flex: 1; background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
       padding: 10px; display: flex; flex-direction: column; gap: 7px; overflow: hidden;
@@ -156,11 +133,8 @@
     .tog input:checked + .tog-track { background: var(--accent); border-color: var(--accent); }
     .tog input:checked + .tog-track:before { transform: translateX(15px); background: #000; }
     #chartContainer { flex: 1; position: relative; min-height: 0; }
-    .smooth-row { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
-    .smooth-row input[type=range] { flex: 1; accent-color: var(--accent); }
-    #smoothVal { font-family: 'Space Mono', monospace; color: var(--accent); min-width: 16px; }
 
-    /* ── FUNCTION ROW (below chart) ── */
+    /* ── FUNCTION ROW ── */
     #functionRow {
       display: flex; align-items: center; gap: 7px; flex-shrink: 0;
       background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 7px 10px;
@@ -186,14 +160,71 @@
     #statsRow {
       display: none; align-items: center; gap: 14px; flex-shrink: 0;
       background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
-      padding: 7px 12px; flex-wrap: wrap;
+      padding: 6px 12px; flex-wrap: wrap;
     }
     .stat-item { display: flex; flex-direction: column; gap: 1px; }
-    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--accent); font-weight: 700; }
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.52rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--accent); font-weight: 700; }
     .stat-val.pos  { color: var(--slope-pos); }
     .stat-val.neg  { color: var(--slope-neg); }
     #rmseDisplay { display: none; }
+
+    /* ══ RIGHT GAUGE COLUMN ══ */
+    #gaugeCol {
+      width: var(--gauge-w);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 8px 8px 4px;
+    }
+
+    /* Distance gauge box */
+    #distGauge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .gauge-label {
+      font-family: 'Space Mono', monospace; font-size: 0.48rem;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+      text-align: center;
+    }
+    #distReadout {
+      font-family: 'Space Mono', monospace; font-weight: 700;
+      font-size: 2rem; color: var(--accent); line-height: 1; text-align: center;
+    }
+    #distUnit {
+      font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted);
+    }
+
+    /* Slope arrow gauge box */
+    #slopeGauge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      flex: 1;
+    }
+    #arrowCanvas {
+      width: 80px; height: 80px;
+      flex-shrink: 0;
+    }
+    #slopeReadout {
+      font-family: 'Space Mono', monospace; font-size: 0.8rem; font-weight: 700;
+      text-align: center; line-height: 1.2;
+    }
+    #slopeReadout.pos  { color: var(--slope-pos); }
+    #slopeReadout.neg  { color: var(--slope-neg); }
+    #slopeReadout.zero { color: var(--slope-zero); }
+    #slopeDirLabel {
+      font-family: 'Space Mono', monospace; font-size: 0.48rem;
+      color: var(--muted); text-align: center; letter-spacing: 1px; text-transform: uppercase;
+    }
 
     /* ── SETTINGS PANEL ── */
     #settingsPanel {
@@ -246,8 +277,6 @@
     .btn-ch:hover { border-color: var(--accent); color: var(--accent); }
     .btn-ch.judge { border-color: var(--success); color: var(--success); }
     .btn-ch.judge:hover { background: var(--success); color: #000; }
-
-    /* view mode selector */
     .view-mode-group { display: flex; gap: 5px; }
     .vm-btn {
       flex: 1; padding: 6px 4px; background: var(--surface2); border: 1px solid var(--border);
@@ -255,24 +284,15 @@
       font-size: 0.6rem; cursor: pointer; text-transform: uppercase; transition: all 0.15s; text-align: center;
     }
     .vm-btn.active { background: var(--accent); border-color: var(--accent); color: #000; }
-
-    /* instructions */
     .inst-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
     .inst-list li { font-size: 0.74rem; color: var(--muted); line-height: 1.5; display: flex; gap: 7px; }
     .inst-list li::before { content: attr(data-n); font-family: 'Space Mono', monospace; color: var(--accent); font-size: 0.62rem; background: rgba(0,229,255,0.1); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; margin-top: 2px; }
     .inst-list li strong { color: var(--text); }
 
     /* ── VALUES TABLE ── */
-    #tableModal {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-      z-index: 200; align-items: center; justify-content: center;
-    }
+    #tableModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
     #tableModal.visible { display: flex; }
-    #tableBox {
-      background: var(--surface); border: 2px solid var(--accent); border-radius: 12px;
-      padding: 20px; max-width: 600px; width: 90%; max-height: 80vh;
-      display: flex; flex-direction: column; gap: 12px;
-    }
+    #tableBox { background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 20px; max-width: 620px; width: 90%; max-height: 82vh; display: flex; flex-direction: column; gap: 12px; }
     #tableBox h3 { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; }
     #tableScroll { overflow-y: auto; flex: 1; }
     table { width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 0.72rem; }
@@ -281,24 +301,38 @@
     td.residual.good { color: var(--success); }
     td.residual.ok   { color: var(--warn); }
     td.residual.miss { color: var(--accent2); }
-    #tableScore { font-family: 'Space Mono', monospace; font-size: 0.75rem; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
+    #tableScore { font-family: 'Space Mono', monospace; font-size: 0.72rem; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
     .close-table { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 7px 14px; font-family: 'Space Mono', monospace; font-size: 0.65rem; cursor: pointer; }
 
     /* ── ARUCO MARKER SCREEN ── */
     #markerScreen {
       display: none; position: fixed; inset: 0; background: #000;
-      z-index: 300; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+      z-index: 300;
     }
     #markerScreen.visible { display: flex; }
-    #markerCanvas { image-rendering: pixelated; }
-    .marker-controls { display: flex; gap: 12px; align-items: center; }
+    /* Marker fills the screen; controls float on the right side */
+    #markerCanvasWrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+    }
+    #markerCanvas { image-rendering: pixelated; display: block; }
+    #markerSidebar {
+      width: 120px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; padding: 20px 12px; background: rgba(255,255,255,0.04);
+      border-left: 1px solid #222;
+    }
     .mctrl-btn {
-      padding: 10px 18px; border-radius: 8px; font-family: 'Space Mono', monospace;
-      font-size: 0.72rem; font-weight: 700; cursor: pointer; text-transform: uppercase; border: none;
+      width: 100%; padding: 12px 8px; border-radius: 8px; font-family: 'Space Mono', monospace;
+      font-size: 0.65rem; font-weight: 700; cursor: pointer; text-transform: uppercase;
+      border: none; text-align: center; line-height: 1.4;
     }
     #markerBackBtn   { background: var(--accent2); color: #fff; }
     #markerRandomBtn { background: var(--accent);  color: #000; }
-    #markerIdLabel   { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #666; }
+    #markerInfoBox {
+      font-family: 'Space Mono', monospace; font-size: 0.6rem;
+      color: #666; text-align: center; line-height: 1.8;
+    }
+    #markerInfoBox span { color: #aaa; display: block; }
   </style>
 </head>
 <body>
@@ -308,40 +342,22 @@
   <div id="header">
     <div class="status-dot" id="statusDot"></div>
     <h1>Motion Grapher</h1>
-    <button class="hdr-btn" id="distToggleBtn"      title="Big Distance Display">📏</button>
-    <button class="hdr-btn" id="speedoToggleBtn"    title="Speedometer">⚡</button>
-    <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope">🎨</button>
+    <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope on graph">🎨</button>
     <button class="hdr-btn" id="markerScreenBtn"    title="ArUco Marker Screen">🖥️</button>
     <button class="hdr-btn" id="tableBtn"           title="Values Table">📋</button>
     <button class="hdr-btn" id="settingsOpenBtn"    title="Settings">⚙️</button>
   </div>
 
-  <!-- BIG DISTANCE -->
-  <div id="bigDistDisplay">
-    <div class="bigdist-label">Distance from Camera</div>
-    <div id="bigDistVal">-- ft</div>
-  </div>
-
-  <!-- SPEEDOMETER -->
-  <div id="speedoBanner" class="zero">
-    <div class="speedo-label">Current Slope</div>
-    <div class="speedo-row">
-      <span id="slopeVal">+0.0</span>
-      <span id="slopeArrow">→</span>
-    </div>
-    <div class="speedo-unit">ft / sec &nbsp;·&nbsp; <span id="slopeDir">constant</span></div>
-  </div>
-
   <!-- MAIN -->
   <div id="content">
 
-    <!-- VIDEO -->
+    <!-- VIDEO COLUMN -->
     <div id="videoCol">
       <div id="videoWrapper">
         <div id="camPlaceholder"><div class="cam-icon">📷</div><span>Camera not started</span></div>
         <video id="video" autoplay playsinline style="display:none"></video>
         <canvas id="overlay"></canvas>
-        <div id="distBadge">Distance: -- ft</div>
+        <div id="distBadge">-- ft</div>
         <div id="countdownOverlay"><div id="countdownNum">3</div></div>
       </div>
       <div id="actionStrip">
@@ -353,7 +369,7 @@
       </div>
     </div>
 
-    <!-- CHART -->
+    <!-- CHART COLUMN -->
     <div id="chartCol">
       <div id="chartPanel">
         <div class="chart-header">
@@ -370,47 +386,48 @@
           </div>
         </div>
         <div id="chartContainer"><canvas id="chart"></canvas></div>
-        <div class="smooth-row">
-          <span>Smooth</span>
-          <input type="range" id="smoothSlider" min="1" max="15" value="5">
-          <span id="smoothVal">5</span>
-        </div>
       </div>
 
       <!-- STATS ROW -->
       <div id="statsRow">
-        <div class="stat-item">
-          <div class="stat-label">Slope</div>
-          <div class="stat-val" id="statSlope">--</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Distance</div>
-          <div class="stat-val" id="statDist">--</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">R²</div>
-          <div class="stat-val" id="statR2">--</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Regression</div>
-          <div class="stat-val" id="statReg">--</div>
-        </div>
-        <div class="stat-item" id="rmseDisplay">
-          <div class="stat-label">RMSE vs f(x)</div>
-          <div class="stat-val" id="statRmse">--</div>
-        </div>
+        <div class="stat-item"><div class="stat-label">Slope</div><div class="stat-val" id="statSlope">--</div></div>
+        <div class="stat-item"><div class="stat-label">Distance</div><div class="stat-val" id="statDist">--</div></div>
+        <div class="stat-item"><div class="stat-label">R²</div><div class="stat-val" id="statR2">--</div></div>
+        <div class="stat-item"><div class="stat-label">Regression</div><div class="stat-val" id="statReg">--</div></div>
+        <div class="stat-item" id="rmseDisplay"><div class="stat-label">RMSE vs f(x)</div><div class="stat-val" id="statRmse">--</div></div>
       </div>
 
       <!-- FUNCTION ROW -->
       <div id="functionRow">
         <label>y =</label>
-        <input type="text" id="fnInput" placeholder="e.g.  2x + 1  or  3*x^2 - 1  or  2^x">
+        <input type="text" id="fnInput" placeholder="e.g.  2x + 1  or  3x^2 - 1  or  2^x">
         <button class="fn-btn" id="fnPlotBtn">Plot f(x)</button>
         <button class="fn-btn" id="fnClearBtn">Clear f(x)</button>
         <span id="fnError"></span>
       </div>
+    </div>
 
-    </div><!-- /chartCol -->
+    <!-- RIGHT GAUGE COLUMN -->
+    <div id="gaugeCol">
+
+      <!-- Distance Box -->
+      <div id="distGauge">
+        <div class="gauge-label">Distance</div>
+        <div id="distReadout">--</div>
+        <div id="distUnit">feet</div>
+      </div>
+
+      <!-- Slope Arrow Box -->
+      <div id="slopeGauge">
+        <div class="gauge-label">Slope</div>
+        <canvas id="arrowCanvas" width="80" height="80"></canvas>
+        <div id="slopeReadout" class="zero">+0.0</div>
+        <div class="gauge-label">ft / sec</div>
+        <div id="slopeDirLabel">constant</div>
+      </div>
+
+    </div>
+
   </div><!-- /content -->
 </div><!-- /app -->
 
@@ -421,22 +438,19 @@
     <h2>Settings</h2>
     <button class="close-btn" id="settingsCloseBtn">✕</button>
   </div>
-
   <div class="panel-section">
     <h3>Calibration</h3>
     <div class="field"><label>Marker Size (cm)</label><input type="number" id="markerSize" value="20"></div>
     <div class="field"><label>Calibration Distance (cm)</label><input type="number" id="calibrationDistance" value="100"></div>
     <button class="btn-cal" id="calibrateBtn">Set Calibration</button>
-    <div id="calStatus">Using default calibration (20 cm marker)</div>
+    <div id="calStatus">Using default (20 cm marker)</div>
   </div>
-
   <div class="panel-section">
     <h3>Recording</h3>
     <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
     <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
     <div class="field"><label>X-axis duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
   </div>
-
   <div class="panel-section">
     <h3>Graph Display Mode</h3>
     <div class="view-mode-group">
@@ -445,7 +459,6 @@
       <button class="vm-btn" data-mode="hybrid">Hybrid</button>
     </div>
   </div>
-
   <div class="panel-section">
     <h3>⚡ Slope Challenge</h3>
     <div class="challenge-box" id="challengeText">Press <em>New Challenge</em> to get a slope target!</div>
@@ -453,15 +466,14 @@
     <button class="btn-ch" id="newChallengeBtn">↻ New Challenge</button>
     <button class="btn-ch judge" id="judgeChallengeBtn">✓ Judge My Run</button>
   </div>
-
   <div class="panel-section">
     <h3>How To Use</h3>
     <ul class="inst-list">
       <li data-n="1"><span><strong>Start Camera</strong> — allow permission</span></li>
-      <li data-n="2"><span>Hold 20 cm marker up — camera calibrates automatically</span></li>
+      <li data-n="2"><span>Hold 20 cm marker up — no calibration needed</span></li>
       <li data-n="3"><span>Press <strong>Record</strong> and move toward/away</span></li>
-      <li data-n="4"><span>Type a function in <strong>y =</strong> box to overlay or match</span></li>
-      <li data-n="5"><span>Press <strong>📋</strong> to see values table &amp; score</span></li>
+      <li data-n="4"><span>Type a function in <strong>y =</strong> to overlay or match</span></li>
+      <li data-n="5"><span>Press <strong>📋</strong> for values table &amp; score</span></li>
     </ul>
   </div>
 </div>
@@ -478,11 +490,17 @@
 
 <!-- ARUCO MARKER SCREEN -->
 <div id="markerScreen">
-  <canvas id="markerCanvas"></canvas>
-  <div class="marker-controls">
+  <div id="markerCanvasWrap">
+    <canvas id="markerCanvas"></canvas>
+  </div>
+  <div id="markerSidebar">
     <button class="mctrl-btn" id="markerBackBtn">← Back to Grapher</button>
     <button class="mctrl-btn" id="markerRandomBtn">↻ Random Marker</button>
-    <span id="markerIdLabel">Marker ID: 0</span>
+    <div id="markerInfoBox">
+      <span id="markerIdLabel">ID: 0</span>
+      <span id="markerSizePx"></span>
+      <span id="markerSizeCm"></span>
+    </div>
   </div>
 </div>
 
