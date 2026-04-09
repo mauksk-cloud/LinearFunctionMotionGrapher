@@ -106,10 +106,11 @@ document.querySelectorAll('.fn-clear-btn').forEach(btn => {
 // ════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════
-// Calibration: 20cm marker at 100cm measured ~150px, but distance was reading 2.6ft (79cm)
-// instead of 3.28ft (100cm). Correction factor: 100/79.2 = 1.263
-// Corrected focalLength = 750 * 1.263 ≈ 947
-let focalLength         = 947;
+// Calibration: at 1m (100cm) with 20cm marker, reading 3.6ft instead of 3.28ft
+// Real distance in cm: 3.28ft * 30.48 = 100cm. Reading 3.6ft * 30.48 = 109.7cm
+// focalLength needs to be scaled by 100/109.7 = 0.912
+// Previous value was 947. New value: 947 * 0.912 = 863
+let focalLength         = 863;
 let lastKnownPixelWidth = null;
 let recording           = false;
 let countingDown        = false;
@@ -177,15 +178,30 @@ const chart = new Chart(document.getElementById("chart"), {
         animation: false, responsive: true, maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-            legend: { labels: { color: '#7986cb', font: { family: 'Space Mono', size: 10 } } },
+            legend: { labels: { color: '#7986cb', font: { family: 'Space Mono', size: 11 } } },
             tooltip: {
-                backgroundColor: 'rgba(26,29,39,0.95)',
-                titleColor: '#7986cb', bodyColor: '#e8eaf6',
-                titleFont: { family: 'Space Mono', size: 10 },
-                bodyFont:  { family: 'Space Mono', size: 11 },
+                backgroundColor: 'rgba(10,12,20,0.97)',
+                borderColor: '#00e5ff', borderWidth: 1,
+                titleColor: '#00e5ff', bodyColor: '#ffffff',
+                titleFont: { family: 'Space Mono', size: 14, weight: 'bold' },
+                bodyFont:  { family: 'Space Mono', size: 14, weight: 'bold' },
+                padding: 14,
                 callbacks: {
-                    title: items => `t = ${items[0].parsed.x.toFixed(2)} s`,
-                    label: item => ` ${item.dataset.label}: (${item.parsed.x.toFixed(2)}, ${item.parsed.y.toFixed(3)} ft)`
+                    title: items => {
+                        // Snap to nearest 0.5s
+                        const snapped = Math.round(items[0].parsed.x * 2) / 2;
+                        return `t = ${snapped.toFixed(1)} sec`;
+                    },
+                    label: item => {
+                        const snappedT = Math.round(item.parsed.x * 2) / 2;
+                        const d = item.parsed.y.toFixed(1);
+                        const friendlyLabel =
+                            item.dataset.label === 'fn1' ? 'My Function' :
+                            item.dataset.label === 'fn2' ? 'Function 2'  :
+                            item.dataset.label === 'fn3' ? 'Function 3'  :
+                            item.dataset.label;
+                        return ` ${friendlyLabel}: (${snappedT.toFixed(1)} sec, ${d} ft)`;
+                    }
                 }
             }
         },
@@ -330,36 +346,9 @@ function sampleAtIntervals(rawData, intervalSec) {
     return pts;
 }
 
-// ════════════════════════════════════════════════
-// STATS ROW
-// ════════════════════════════════════════════════
-function updateStatsRow(reg) {
-    statsRow.style.display = 'flex';
-    if (reg) {
-        const sign = reg.m >= 0 ? '+' : '';
-        statSlope.textContent = `${sign}${reg.m.toFixed(3)} ft/s`;
-        statSlope.className   = 'stat-val ' + (reg.m > 0.05 ? 'pos' : reg.m < -0.05 ? 'neg' : '');
-        statReg.textContent   = `y=${reg.m.toFixed(2)}x${reg.b>=0?'+':''}${reg.b.toFixed(2)}`;
-        statR2.textContent    = reg.r2.toFixed(4);
-    }
-    // RMSE for first active fn
-    const firstFn = fnFunctions.find(f => f !== null);
-    if (firstFn && data.length) {
-        const rmse = calcRmse(data, firstFn);
-        statRmse.textContent = rmse.toFixed(4) + ' ft';
-        rmseDisplay.style.display = 'flex';
-    } else {
-        rmseDisplay.style.display = 'none';
-    }
-}
-
-function updateLiveStats(distFt, slope) {
-    statsRow.style.display = 'flex';
-    const s = slope >= 0 ? '+' : '';
-    statSlope.textContent = `${s}${slope.toFixed(2)} ft/s`;
-    statSlope.className   = 'stat-val ' + (slope > 0.05 ? 'pos' : slope < -0.05 ? 'neg' : '');
-    statDist.textContent  = distFt.toFixed(2) + ' ft';
-}
+// Stats row removed — these are no-ops kept so other code doesn't break
+function updateStatsRow(reg) { /* stats row removed */ }
+function updateLiveStats(distFt, slope) { /* stats row removed */ }
 
 // ════════════════════════════════════════════════
 // REGRESSION + RMSE
@@ -623,29 +612,72 @@ function calcSlope(t, distFt) {
 }
 
 // ════════════════════════════════════════════════
-// PROCESS VIDEO
+// PROCESS VIDEO — Fix for object-fit:cover skew
+// Detection runs on native video resolution.
+// Drawing is remapped to match what the CSS cover crop shows.
 // ════════════════════════════════════════════════
 function processVideo() {
     if (!video.videoWidth) { requestAnimationFrame(processVideo); return; }
-    const vw = video.videoWidth, vh = video.videoHeight;
-    overlay.width = vw; overlay.height = vh;
-    ctx.drawImage(video, 0, 0, vw, vh);
-    const imageData = ctx.getImageData(0, 0, vw, vh);
+
+    const vw = video.videoWidth,  vh = video.videoHeight;   // native video pixels
+    const dw = videoWrapper.clientWidth,  dh = videoWrapper.clientHeight; // displayed size
+
+    // object-fit: cover — figure out which dimension is cropped
+    const videoAspect   = vw / vh;
+    const displayAspect = dw / dh;
+
+    let cropX = 0, cropY = 0, cropW = vw, cropH = vh;
+    if (videoAspect > displayAspect) {
+        // Video is wider than display — crop left/right
+        cropH = vh;
+        cropW = Math.round(vh * displayAspect);
+        cropX = Math.round((vw - cropW) / 2);
+    } else {
+        // Video is taller than display — crop top/bottom
+        cropW = vw;
+        cropH = Math.round(vw / displayAspect);
+        cropY = Math.round((vh - cropH) / 2);
+    }
+
+    // Draw full native frame into an offscreen canvas for detection
+    const offscreen = document.createElement('canvas');
+    offscreen.width = vw; offscreen.height = vh;
+    const offCtx = offscreen.getContext('2d', { willReadFrequently: true });
+    offCtx.drawImage(video, 0, 0, vw, vh);
+    const imageData = offCtx.getImageData(0, 0, vw, vh);
     const markers   = detector.detect(imageData);
-    ctx.clearRect(0, 0, vw, vh);
+
+    // Set overlay canvas to DISPLAY size so it lines up with the CSS-rendered video
+    overlay.width  = dw;
+    overlay.height = dh;
+    ctx.clearRect(0, 0, dw, dh);
+
+    // Helper: map native video pixel → display pixel accounting for cover crop
+    function toDisplay(nx, ny) {
+        const rx = (nx - cropX) / cropW;  // 0..1 within crop
+        const ry = (ny - cropY) / cropH;
+        return { x: rx * dw, y: ry * dh };
+    }
 
     if (markers.length > 0) {
         const corners = markers[0].corners;
-        ctx.strokeStyle = "#00e5ff";
-        ctx.lineWidth   = Math.max(2, vw / 200);
-        ctx.beginPath();
-        corners.forEach((c, i) => i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y));
-        ctx.closePath(); ctx.stroke();
-        const dotR = Math.max(4, vw / 120);
-        ctx.fillStyle = "#ff4081";
-        corners.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, dotR, 0, Math.PI*2); ctx.fill(); });
 
+        // Remap corners to display coordinates
+        const dc = corners.map(c => toDisplay(c.x, c.y));
+
+        ctx.strokeStyle = "#00e5ff";
+        ctx.lineWidth   = 3;
+        ctx.beginPath();
+        dc.forEach((c, i) => i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y));
+        ctx.closePath(); ctx.stroke();
+
+        ctx.fillStyle = "#ff4081";
+        dc.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, 6, 0, Math.PI*2); ctx.fill(); });
+
+        // Width in native pixels (for distance calculation — don't use display coords)
         const widthPx = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
+        // Scale widthPx to account for crop scaling (cropW pixels map to dw display pixels)
+        // But since focalLength was calibrated with native pixels, use native widthPx directly
         lastKnownPixelWidth = widthPx;
         const distCm = smooth((parseFloat(markerSizeInput.value) * focalLength) / widthPx);
         const distFt = distCm / 30.48;

@@ -99,10 +99,10 @@
     @keyframes popgo { 0%{transform:scale(1.5);opacity:0.2} 30%{transform:scale(1);opacity:1} 100%{transform:scale(1);opacity:1} }
 
     /* action buttons */
-    #actionStrip { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex-shrink: 0; }
+    #actionStrip { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex-shrink: 0; }
     .abtn {
-      padding: 8px 5px; border: none; border-radius: 8px;
-      font-family: 'Space Mono', monospace; font-size: 0.6rem; font-weight: 700;
+      padding: 14px 5px; border: none; border-radius: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700;
       letter-spacing: 0.3px; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
     }
     .abtn:hover  { filter: brightness(1.15); transform: translateY(-1px); }
@@ -111,7 +111,6 @@
     .abtn-start  { background: var(--success);  color: #000; grid-column: span 2; }
     .abtn-stop   { background: var(--accent2);  color: #fff; }
     .abtn-clear  { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    .abtn-export { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); grid-column: span 2; }
     .abtn:disabled { opacity: 0.4; cursor: default; transform: none; filter: none; }
 
     /* ── MIDDLE: CHART COLUMN ── */
@@ -131,18 +130,6 @@
     .tog input:checked + .tog-track { background: var(--accent); border-color: var(--accent); }
     .tog input:checked + .tog-track:before { transform: translateX(14px); background: #000; }
     #chartContainer { flex: 1; position: relative; min-height: 0; }
-    /* stats row */
-    #statsRow {
-      display: none; align-items: center; gap: 12px; flex-shrink: 0;
-      background: var(--surface); border-radius: 8px; border: 1px solid var(--border);
-      padding: 5px 10px; flex-wrap: wrap;
-    }
-    .stat-item { display: flex; flex-direction: column; gap: 1px; }
-    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.48rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-    .stat-val   { font-family: 'Space Mono', monospace; font-size: 0.82rem; color: var(--accent); font-weight: 700; }
-    .stat-val.pos { color: var(--slope-pos); }
-    .stat-val.neg { color: var(--slope-neg); }
-    #rmseDisplay { display: none; }
 
     /* ── RIGHT: GAUGE + FUNCTION COLUMN ── */
     #rightCol {
@@ -153,67 +140,80 @@
     /* Distance gauge */
     #distGauge {
       background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px;
       flex-shrink: 0;
     }
-    .gauge-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .gauge-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
     #distReadout { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 3.2rem; color: var(--accent); line-height: 1; text-align: center; }
-    #distUnit    { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); }
+    #distUnit    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); }
 
     /* Slope arrow gauge */
     #slopeGauge {
       background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 5px;
-      flex: 1; min-height: 0;
+      padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex-shrink: 0;
     }
     #arrowCanvas { width: 100%; max-width: 180px; flex-shrink: 0; }
     #slopeReadout {
-      font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 700;
+      font-family: 'Space Mono', monospace; font-size: 2.4rem; font-weight: 700;
       text-align: center; line-height: 1;
     }
     #slopeReadout.pos  { color: var(--slope-pos); }
     #slopeReadout.neg  { color: var(--slope-neg); }
     #slopeReadout.zero { color: var(--slope-zero); }
     #slopeDirLabel {
-      font-family: 'Space Mono', monospace; font-size: 0.75rem; font-weight: 700;
+      font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700;
       color: var(--text); text-align: center; letter-spacing: 1px; text-transform: uppercase;
     }
+    .gauge-unit-small {
+      font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted);
+    }
 
-    /* ── FUNCTION BOX ── */
+    /* ── FUNCTION BOX — stacked full-width slots ── */
     #fnBox {
-      background: var(--surface); border: 1px solid var(--accent);
-      border-radius: 12px; padding: 12px 10px; flex-shrink: 0;
+      background: var(--surface); border: 2px solid var(--accent);
+      border-radius: 12px; padding: 10px 10px 8px; flex: 1; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: hidden;
     }
     #fnBox h3 {
-      font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent);
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+      font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent);
+      letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
     }
-    .fn-entry-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
-    .fn-color-dot {
-      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
-      border: 2px solid rgba(255,255,255,0.2);
+    .fn-slot {
+      display: flex; flex-direction: column; gap: 4px; flex: 1;
+      background: var(--surface2); border-radius: 8px; padding: 7px 8px;
+      border-left: 3px solid transparent;
     }
-    .fn-label { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--accent); white-space: nowrap; }
+    .fn-slot:nth-child(2) { border-color: #ffd740; }
+    .fn-slot:nth-child(3) { border-color: #ff4081; }
+    .fn-slot:nth-child(4) { border-color: #b39ddb; }
+    .fn-slot-top { display: flex; align-items: center; gap: 6px; }
+    .fn-slot-label {
+      font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--accent);
+      white-space: nowrap; font-weight: 700;
+    }
     .fn-text-input {
-      flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px;
-      color: var(--text); padding: 5px 7px; font-family: 'Space Mono', monospace; font-size: 0.78rem;
-      outline: none; transition: border-color 0.2s; min-width: 0;
+      flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+      color: var(--text); padding: 6px 8px; font-family: 'Space Mono', monospace; font-size: 1rem;
+      outline: none; transition: border-color 0.2s; width: 100%;
     }
     .fn-text-input:focus { border-color: var(--accent); }
     .fn-text-input.error { border-color: var(--accent2); }
+    .fn-slot-btns { display: flex; gap: 5px; }
     .fn-plot-btn {
-      padding: 5px 8px; border: none; border-radius: 5px;
-      font-family: 'Space Mono', monospace; font-size: 0.6rem; font-weight: 700;
-      cursor: pointer; text-transform: uppercase; transition: all 0.15s; white-space: nowrap;
+      flex: 1; padding: 5px; border: none; border-radius: 5px;
+      font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700;
+      cursor: pointer; text-transform: uppercase; transition: all 0.15s;
       background: var(--accent); color: #000;
     }
     .fn-plot-btn:hover { filter: brightness(1.1); }
     .fn-clear-btn {
-      padding: 5px 7px; border: 1px solid var(--border); border-radius: 5px;
-      background: var(--surface2); color: var(--muted);
-      font-family: 'Space Mono', monospace; font-size: 0.6rem; cursor: pointer;
+      padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px;
+      background: transparent; color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 0.65rem; cursor: pointer;
+      transition: all 0.15s;
     }
-    #fnGlobalError { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent2); margin-top: 4px; min-height: 1em; }
+    .fn-clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    #fnGlobalError { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent2); flex-shrink: 0; min-height: 0.8em; }
 
     /* ── SETTINGS PANEL ── */
     #settingsPanel {
@@ -319,7 +319,6 @@
         <button class="abtn abtn-start"  id="startBtn" disabled>⬤ Record</button>
         <button class="abtn abtn-stop"   id="stopBtn">■ Stop</button>
         <button class="abtn abtn-clear"  id="clearBtn">↺ Clear</button>
-        <button class="abtn abtn-export" id="exportBtn">↓ Export CSV</button>
       </div>
     </div>
 
@@ -341,13 +340,6 @@
         </div>
         <div id="chartContainer"><canvas id="chart"></canvas></div>
       </div>
-      <div id="statsRow">
-        <div class="stat-item"><div class="stat-label">Slope</div><div class="stat-val" id="statSlope">--</div></div>
-        <div class="stat-item"><div class="stat-label">Distance</div><div class="stat-val" id="statDist">--</div></div>
-        <div class="stat-item"><div class="stat-label">R²</div><div class="stat-val" id="statR2">--</div></div>
-        <div class="stat-item"><div class="stat-label">Regression</div><div class="stat-val" id="statReg">--</div></div>
-        <div class="stat-item" id="rmseDisplay"><div class="stat-label">RMSE vs f(x)</div><div class="stat-val" id="statRmse">--</div></div>
-      </div>
     </div>
 
     <!-- RIGHT: GAUGES + FUNCTION BOX -->
@@ -366,33 +358,46 @@
         <canvas id="arrowCanvas" width="180" height="180"></canvas>
         <div id="slopeReadout" class="zero">+0.0</div>
         <div id="slopeDirLabel">constant</div>
+        <div class="gauge-unit-small">ft / sec</div>
       </div>
 
-      <!-- Multi-equation function box -->
+      <!-- Multi-equation function box — stacked full-width slots -->
       <div id="fnBox">
-        <h3>📐 Functions  y = f(x)</h3>
-        <!-- Three equation slots with different colors -->
-        <div class="fn-entry-row">
-          <div class="fn-color-dot" style="background:#ffd740"></div>
-          <span class="fn-label">y =</span>
-          <input class="fn-text-input" id="fn1Input" placeholder="2x + 1">
-          <button class="fn-plot-btn" data-fn="1">Plot</button>
-          <button class="fn-clear-btn" data-fn="1">✕</button>
+        <h3>📐 y = f(x)</h3>
+
+        <div class="fn-slot">
+          <div class="fn-slot-top">
+            <span class="fn-slot-label">y =</span>
+            <input class="fn-text-input" id="fn1Input" placeholder="2x + 1">
+          </div>
+          <div class="fn-slot-btns">
+            <button class="fn-plot-btn" data-fn="1">▶ Plot</button>
+            <button class="fn-clear-btn" data-fn="1">✕ Clear</button>
+          </div>
         </div>
-        <div class="fn-entry-row">
-          <div class="fn-color-dot" style="background:#ff4081"></div>
-          <span class="fn-label">y =</span>
-          <input class="fn-text-input" id="fn2Input" placeholder="3x^2 - 1">
-          <button class="fn-plot-btn" data-fn="2">Plot</button>
-          <button class="fn-clear-btn" data-fn="2">✕</button>
+
+        <div class="fn-slot">
+          <div class="fn-slot-top">
+            <span class="fn-slot-label">y =</span>
+            <input class="fn-text-input" id="fn2Input" placeholder="3x^2 - 1">
+          </div>
+          <div class="fn-slot-btns">
+            <button class="fn-plot-btn" data-fn="2">▶ Plot</button>
+            <button class="fn-clear-btn" data-fn="2">✕ Clear</button>
+          </div>
         </div>
-        <div class="fn-entry-row">
-          <div class="fn-color-dot" style="background:#b39ddb"></div>
-          <span class="fn-label">y =</span>
-          <input class="fn-text-input" id="fn3Input" placeholder="2^x">
-          <button class="fn-plot-btn" data-fn="3">Plot</button>
-          <button class="fn-clear-btn" data-fn="3">✕</button>
+
+        <div class="fn-slot">
+          <div class="fn-slot-top">
+            <span class="fn-slot-label">y =</span>
+            <input class="fn-text-input" id="fn3Input" placeholder="2^x">
+          </div>
+          <div class="fn-slot-btns">
+            <button class="fn-plot-btn" data-fn="3">▶ Plot</button>
+            <button class="fn-clear-btn" data-fn="3">✕ Clear</button>
+          </div>
         </div>
+
         <div id="fnGlobalError"></div>
       </div>
 
@@ -420,6 +425,10 @@
     <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
     <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
     <div class="field"><label>X-axis Duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
+  </div>
+  <div class="panel-section">
+    <h3>Export Data</h3>
+    <button class="btn-cal" id="exportBtn" style="border-color:var(--success);color:var(--success)">↓ Export CSV</button>
   </div>
   <div class="panel-section">
     <h3>Graph Display Mode</h3>
