@@ -35,14 +35,14 @@ const slopeDirLabel = document.getElementById("slopeDirLabel");
 const countdownOverlay = document.getElementById("countdownOverlay");
 const countdownNum     = document.getElementById("countdownNum");
 
-// Stats
-const statsRow   = document.getElementById("statsRow");
-const statSlope  = document.getElementById("statSlope");
-const statDist   = document.getElementById("statDist");
-const statR2     = document.getElementById("statR2");
-const statReg    = document.getElementById("statReg");
-const rmseDisplay= document.getElementById("rmseDisplay");
-const statRmse   = document.getElementById("statRmse");
+// Stats (removed from DOM — kept as no-ops so nothing breaks)
+const statsRow   = { style: {} };
+const statSlope  = null;
+const statDist   = null;
+const statR2     = null;
+const statReg    = null;
+const rmseDisplay= null;
+const statRmse   = null;
 
 // Settings
 const markerSizeInput          = document.getElementById("markerSize");
@@ -75,6 +75,20 @@ const markerRandomBtn = document.getElementById("markerRandomBtn");
 const markerIdLabel   = document.getElementById("markerIdLabel");
 const markerSizePx    = document.getElementById("markerSizePx");
 const markerSizeCm    = document.getElementById("markerSizeCm");
+
+// Ball tracking
+const ballModeBtn      = document.getElementById("ballModeBtn");
+const ballPickOverlay  = document.getElementById("ballPickOverlay");
+const ballColorSwatch  = document.getElementById("ballColorSwatch");
+const ballColorLabel   = document.getElementById("ballColorLabel");
+const ballDiameterInput= document.getElementById("ballDiameter");
+
+// Window settings
+const xMinInput       = document.getElementById("xMin");
+const xMaxInput       = document.getElementById("xMax");
+const yMinInput       = document.getElementById("yMin");
+const yMaxInput       = document.getElementById("yMax");
+const applyWindowBtn  = document.getElementById("applyWindowBtn");
 
 // Challenges
 const newChallengeBtn   = document.getElementById("newChallengeBtn");
@@ -128,6 +142,12 @@ let viewMode            = 'full';
 let regressionOn        = false;
 let arrowAngleDeg       = 0;
 
+// Ball tracking state
+let ballModeOn          = false;
+let ballPickMode        = false;
+let ballColor           = null;  // { r, g, b }
+let ballColorTolerance  = 40;    // HSV-ish tolerance in RGB space
+
 // ════════════════════════════════════════════════
 // PANELS
 // ════════════════════════════════════════════════
@@ -141,6 +161,75 @@ signSlopeToggleBtn.onclick = () => {
     signSlopeOn = !signSlopeOn;
     signSlopeToggleBtn.classList.toggle("active", signSlopeOn);
     rebuildChart();
+};
+
+// ── Ball Mode Toggle ──
+ballModeBtn.onclick = () => {
+    ballModeOn = !ballModeOn;
+    ballModeBtn.classList.toggle("active", ballModeOn);
+    if (ballModeOn) {
+        ballPickMode = true;
+        ballPickOverlay.classList.add("visible");
+        ballModeBtn.title = "Ball Mode ON — click ball to repick";
+    } else {
+        ballPickMode = false;
+        ballColor = null;
+        ballPickOverlay.classList.remove("visible");
+        ballModeBtn.title = "Ball Tracking Mode";
+        ballColorSwatch.style.background = '';
+        ballColorLabel.textContent = 'none';
+        // Re-init ArUco detector if not already done
+        if (!detector && typeof AR !== "undefined") detector = new AR.Detector();
+    }
+};
+
+// Click on video to pick ball color
+overlay.addEventListener("click", (e) => {
+    if (!ballPickMode) return;
+    const rect = overlay.getBoundingClientRect();
+    const cx   = (e.clientX - rect.left) / rect.width;
+    const cy   = (e.clientY - rect.top)  / rect.height;
+    // Sample color from the offscreen (native) canvas
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const dw = videoWrapper.clientWidth, dh = videoWrapper.clientHeight;
+    const videoAspect = vw / vh, displayAspect = dw / dh;
+    let cropX=0, cropY=0, cropW=vw, cropH=vh;
+    if (videoAspect > displayAspect) { cropH=vh; cropW=Math.round(vh*displayAspect); cropX=Math.round((vw-cropW)/2); }
+    else { cropW=vw; cropH=Math.round(vw/displayAspect); cropY=Math.round((vh-cropH)/2); }
+    const nx = Math.round(cropX + cx * cropW);
+    const ny = Math.round(cropY + cy * cropH);
+    const tmpC = document.createElement('canvas');
+    tmpC.width = vw; tmpC.height = vh;
+    const tmpCtx = tmpC.getContext('2d');
+    tmpCtx.drawImage(video, 0, 0, vw, vh);
+    const px = tmpCtx.getImageData(Math.max(0,nx-2), Math.max(0,ny-2), 5, 5).data;
+    let r=0,g=0,b=0,n=0;
+    for (let i=0;i<px.length;i+=4){r+=px[i];g+=px[i+1];b+=px[i+2];n++;}
+    r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
+    ballColor = {r,g,b};
+    ballColorSwatch.style.background = `rgb(${r},${g},${b})`;
+    ballColorLabel.textContent = `rgb(${r},${g},${b})`;
+    ballPickMode = false;
+    ballPickOverlay.classList.remove("visible");
+});
+
+// ── Window Settings ──
+applyWindowBtn.onclick = () => {
+    const x0 = parseFloat(xMinInput.value) || 0;
+    const x1 = parseFloat(xMaxInput.value) || 5;
+    const y0 = parseFloat(yMinInput.value) || 0;
+    const y1 = parseFloat(yMaxInput.value) || 12;
+    chart.options.scales.x.min = x0;
+    chart.options.scales.x.max = x1;
+    chart.options.scales.y.min = y0;
+    chart.options.scales.y.max = y1;
+    // Sync the x-axis duration field too
+    xAxisDurationInput.value = x1;
+    chart.update();
+    // Replot fn overlays for new x range
+    fnFunctions.forEach((fn, i) => { if (fn) plotFnOverlay(i); });
+    chart.update();
+    closePanel();
 };
 
 vmBtns.forEach(btn => {
@@ -486,26 +575,41 @@ function parseFunction(expr) {
     let e = expr.trim()
         .replace(/^[yY]\s*=\s*/, '')
         .replace(/^f\s*\(\s*x\s*\)\s*=\s*/, '');
+
+    // Absolute value: |expr| → Math.abs(expr)
     e = e.replace(/\|([^|]+)\|/g, 'Math.abs($1)');
+
+    // Handle implicit multiplication: 2x → 2*x, 2( → 2*(, )(  → )*(, )x → )*x, x( → x*(
     e = e.replace(/(\d)(x)/gi,  '$1*x');
     e = e.replace(/(\d)\(/g,    '$1*(');
     e = e.replace(/\)(x)/gi,    ')*x');
     e = e.replace(/\)(\d)/g,    ')*$1');
     e = e.replace(/x\(/gi,      'x*(');
     e = e.replace(/(x)(\d)/gi,  'x*$1');
-    e = e.replace(/([a-zA-Z0-9_\.]+|\))\s*\^\s*([a-zA-Z0-9_\.]+|\()/g, 'Math.pow($1,$2)');
+    // Handle negative coefficient: -(x → -1*(x   (e.g. -(x-3) )
+    e = e.replace(/^-\(/,       '-1*(');
+    e = e.replace(/([+\-*/,\(])\s*-\(/g, '$1-1*(');
+
+    // Powers: a^b → Math.pow(a,b)
+    // Handle cases like (x-3)^2, x^2, 2^x
+    e = e.replace(/\(([^()]+)\)\s*\^\s*([0-9.]+)/g, 'Math.pow(($1),$2)');
+    e = e.replace(/([a-zA-Z0-9_.]+)\s*\^\s*([a-zA-Z0-9_.]+|\([^)]+\))/g, 'Math.pow($1,$2)');
+
+    // Named constants / functions
     e = e.replace(/\be\b/g,    'Math.E');
+    e = e.replace(/\bpi\b/gi,  'Math.PI');
     e = e.replace(/\bsqrt\b/g, 'Math.sqrt');
     e = e.replace(/\babs\b/g,  'Math.abs');
     e = e.replace(/\bsin\b/g,  'Math.sin');
     e = e.replace(/\bcos\b/g,  'Math.cos');
+    e = e.replace(/\btan\b/g,  'Math.tan');
     e = e.replace(/\bln\b/g,   'Math.log');
     e = e.replace(/\blog\b/g,  'Math.log10');
-    e = e.replace(/\bpi\b/gi,  'Math.PI');
+
     try {
         const fn   = new Function('x', `"use strict"; return (${e});`);
         const test = fn(1);
-        if (typeof test !== 'number' || isNaN(test)) throw new Error("Not a number");
+        if (typeof test !== 'number' || isNaN(test)) throw new Error("Not a number at x=1");
         return fn;
     } catch(err) { throw new Error("Parse error: " + err.message); }
 }
@@ -567,8 +671,10 @@ function plotFnOverlay(i) {
 // CAMERA
 // ════════════════════════════════════════════════
 cameraBtn.onclick = function () {
-    if (typeof AR === "undefined") { alert("ArUco library failed to load. Refresh."); return; }
-    if (!detector) detector = new AR.Detector();
+    if (!ballModeOn) {
+        if (typeof AR === "undefined") { alert("ArUco library failed to load. Refresh."); return; }
+        if (!detector) detector = new AR.Detector();
+    }
     navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } })
         .then(stream => {
             video.srcObject = stream;
@@ -619,50 +725,115 @@ function calcSlope(t, distFt) {
 function processVideo() {
     if (!video.videoWidth) { requestAnimationFrame(processVideo); return; }
 
-    const vw = video.videoWidth,  vh = video.videoHeight;   // native video pixels
-    const dw = videoWrapper.clientWidth,  dh = videoWrapper.clientHeight; // displayed size
+    const vw = video.videoWidth,  vh = video.videoHeight;
+    const dw = videoWrapper.clientWidth,  dh = videoWrapper.clientHeight;
 
-    // object-fit: cover — figure out which dimension is cropped
     const videoAspect   = vw / vh;
     const displayAspect = dw / dh;
-
     let cropX = 0, cropY = 0, cropW = vw, cropH = vh;
     if (videoAspect > displayAspect) {
-        // Video is wider than display — crop left/right
-        cropH = vh;
-        cropW = Math.round(vh * displayAspect);
-        cropX = Math.round((vw - cropW) / 2);
+        cropH = vh; cropW = Math.round(vh * displayAspect); cropX = Math.round((vw - cropW) / 2);
     } else {
-        // Video is taller than display — crop top/bottom
-        cropW = vw;
-        cropH = Math.round(vw / displayAspect);
-        cropY = Math.round((vh - cropH) / 2);
+        cropW = vw; cropH = Math.round(vw / displayAspect); cropY = Math.round((vh - cropH) / 2);
     }
 
-    // Draw full native frame into an offscreen canvas for detection
+    // Draw native frame to offscreen canvas
     const offscreen = document.createElement('canvas');
     offscreen.width = vw; offscreen.height = vh;
     const offCtx = offscreen.getContext('2d', { willReadFrequently: true });
     offCtx.drawImage(video, 0, 0, vw, vh);
-    const imageData = offCtx.getImageData(0, 0, vw, vh);
-    const markers   = detector.detect(imageData);
 
-    // Set overlay canvas to DISPLAY size so it lines up with the CSS-rendered video
     overlay.width  = dw;
     overlay.height = dh;
     ctx.clearRect(0, 0, dw, dh);
 
-    // Helper: map native video pixel → display pixel accounting for cover crop
     function toDisplay(nx, ny) {
-        const rx = (nx - cropX) / cropW;  // 0..1 within crop
-        const ry = (ny - cropY) / cropH;
-        return { x: rx * dw, y: ry * dh };
+        return { x: ((nx - cropX) / cropW) * dw, y: ((ny - cropY) / cropH) * dh };
     }
+
+    // ── BALL TRACKING MODE ──
+    if (ballModeOn && ballColor) {
+        const imageData = offCtx.getImageData(0, 0, vw, vh);
+        const pixels    = imageData.data;
+        const tol       = ballColorTolerance;
+        const { r: tr, g: tg, b: tb } = ballColor;
+
+        let minX=vw, minY=vh, maxX=0, maxY=0, count=0;
+        // Sample every 3rd pixel for performance
+        for (let py = 0; py < vh; py += 3) {
+            for (let px = 0; px < vw; px += 3) {
+                const idx = (py * vw + px) * 4;
+                const dr = Math.abs(pixels[idx]   - tr);
+                const dg = Math.abs(pixels[idx+1] - tg);
+                const db = Math.abs(pixels[idx+2] - tb);
+                if (dr < tol && dg < tol && db < tol) {
+                    if (px < minX) minX = px;
+                    if (px > maxX) maxX = px;
+                    if (py < minY) minY = py;
+                    if (py > maxY) maxY = py;
+                    count++;
+                }
+            }
+        }
+
+        const blobArea = (maxX - minX) * (maxY - minY);
+        if (count > 60 && blobArea > 100) {
+            // Diameter estimate: average of width and height of bounding box
+            const diamPx = ((maxX - minX) + (maxY - minY)) / 2;
+            lastKnownPixelWidth = diamPx;
+            const realDiam = parseFloat(ballDiameterInput.value) || 6.5;
+            const distCm   = smooth((realDiam * focalLength) / diamPx);
+            const distFt   = distCm / 30.48;
+
+            // Draw bounding circle in display coords
+            const cxN = (minX + maxX) / 2, cyN = (minY + maxY) / 2;
+            const dispC = toDisplay(cxN, cyN);
+            const dispR = (diamPx / cropW) * dw / 2;
+            ctx.strokeStyle = "#ffd740";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(dispC.x, dispC.y, dispR, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = "rgba(255,215,64,0.15)";
+            ctx.fill();
+            // Center dot
+            ctx.beginPath();
+            ctx.arc(dispC.x, dispC.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffd740";
+            ctx.fill();
+
+            distBadge.innerText = distFt.toFixed(2) + " ft";
+            const now   = (Date.now() - startTime) / 1000;
+            const slope = calcSlope(now, distFt);
+            updateGauges(distFt, slope);
+
+            if (recording) {
+                const t = (Date.now() - startTime) / 1000;
+                if (t >= parseFloat(maxTimeInput.value)) {
+                    stopRecording();
+                } else if (t - lastRecordTime >= 0.05) {
+                    lastRecordTime = t;
+                    const tVal = parseFloat(t.toFixed(2));
+                    const dVal = parseFloat(distFt.toFixed(3));
+                    data.push([tVal, dVal]);
+                    chart.data.datasets[0].data.push({ x: tVal, y: dVal });
+                    chart.update('none');
+                }
+            }
+        } else {
+            distBadge.innerText = ballColor ? "No ball found" : "Pick a color";
+            videoWrapper.classList.remove('slope-pos','slope-neg','slope-zero');
+        }
+        requestAnimationFrame(processVideo);
+        return;
+    }
+
+    // ── ARUCO MODE (default) ──
+    const imageData = offCtx.getImageData(0, 0, vw, vh);
+    const markers   = detector.detect(imageData);
 
     if (markers.length > 0) {
         const corners = markers[0].corners;
-
-        // Remap corners to display coordinates
         const dc = corners.map(c => toDisplay(c.x, c.y));
 
         ctx.strokeStyle = "#00e5ff";
@@ -674,10 +845,7 @@ function processVideo() {
         ctx.fillStyle = "#ff4081";
         dc.forEach(c => { ctx.beginPath(); ctx.arc(c.x, c.y, 6, 0, Math.PI*2); ctx.fill(); });
 
-        // Width in native pixels (for distance calculation — don't use display coords)
         const widthPx = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
-        // Scale widthPx to account for crop scaling (cropW pixels map to dw display pixels)
-        // But since focalLength was calibrated with native pixels, use native widthPx directly
         lastKnownPixelWidth = widthPx;
         const distCm = smooth((parseFloat(markerSizeInput.value) * focalLength) / widthPx);
         const distFt = distCm / 30.48;
@@ -817,7 +985,6 @@ clearBtn.onclick = function () {
     // Re-add fn overlay placeholders
     ensureFnDatasets();
     chart.update();
-    statsRow.style.display = 'none';
     smoothBuffer = []; lastRecordTime = 0; slopeBuffer = [];
     statusDot.classList.remove("recording");
     challengeScore.textContent = ''; challengeScore.className = '';

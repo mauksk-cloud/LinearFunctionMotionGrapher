@@ -215,7 +215,24 @@
     .fn-clear-btn:hover { border-color: var(--accent2); color: var(--accent2); }
     #fnGlobalError { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--accent2); flex-shrink: 0; min-height: 0.8em; }
 
-    /* ── SETTINGS PANEL ── */
+    /* ── BALL MODE ── */
+    #ballPickOverlay {
+      position: absolute; inset: 0; z-index: 15; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5); cursor: crosshair;
+    }
+    #ballPickOverlay.visible { display: flex; }
+    #ballPickMsg {
+      background: rgba(0,0,0,0.85); border: 2px solid var(--warn);
+      border-radius: 12px; padding: 12px 18px;
+      font-family: 'Space Mono', monospace; font-size: 0.75rem;
+      color: var(--warn); text-align: center; pointer-events: none;
+    }
+    #ballColorSwatch {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--border); display: inline-block;
+      vertical-align: middle; margin-left: 6px;
+    }
     #settingsPanel {
       position: fixed; top: 0; right: 0; width: var(--panel-w); height: 100vh;
       background: var(--surface); border-left: 2px solid var(--accent);
@@ -297,6 +314,7 @@
     <div class="status-dot" id="statusDot"></div>
     <h1>Motion Grapher</h1>
     <button class="hdr-btn" id="signSlopeToggleBtn" title="Sign of Slope colors">🎨</button>
+    <button class="hdr-btn" id="ballModeBtn"        title="Ball Tracking Mode">🎾</button>
     <button class="hdr-btn" id="markerScreenBtn"    title="ArUco Marker Screen">🖥️</button>
     <button class="hdr-btn" id="tableBtn"           title="Values Table">📋</button>
     <button class="hdr-btn" id="settingsOpenBtn"    title="Settings">⚙️</button>
@@ -311,6 +329,7 @@
         <div id="camPlaceholder"><div class="cam-icon">📷</div><span>Camera not started</span></div>
         <video id="video" autoplay playsinline style="display:none"></video>
         <canvas id="overlay"></canvas>
+        <div id="ballPickOverlay"><div id="ballPickMsg">🎾 Click on the ball to pick its color</div></div>
         <div id="distBadge">-- ft</div>
         <div id="countdownOverlay"><div id="countdownNum">3</div></div>
       </div>
@@ -364,11 +383,16 @@
       <!-- Multi-equation function box — stacked full-width slots -->
       <div id="fnBox">
         <h3>📐 y = f(x)</h3>
+        <div style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted);line-height:1.5;flex-shrink:0;">
+          Linear: <span style="color:var(--warn)">2x+1</span> &nbsp;|&nbsp;
+          Quad: <span style="color:var(--warn)">2(x-1)^2+3</span> &nbsp;|&nbsp;
+          Exp: <span style="color:var(--warn)">2^x</span>
+        </div>
 
         <div class="fn-slot">
           <div class="fn-slot-top">
             <span class="fn-slot-label">y =</span>
-            <input class="fn-text-input" id="fn1Input" placeholder="2x + 1">
+            <input class="fn-text-input" id="fn1Input" placeholder="e.g. 2x + 1">
           </div>
           <div class="fn-slot-btns">
             <button class="fn-plot-btn" data-fn="1">▶ Plot</button>
@@ -379,7 +403,7 @@
         <div class="fn-slot">
           <div class="fn-slot-top">
             <span class="fn-slot-label">y =</span>
-            <input class="fn-text-input" id="fn2Input" placeholder="3x^2 - 1">
+            <input class="fn-text-input" id="fn2Input" placeholder="e.g. -0.5(x-3)^2+8">
           </div>
           <div class="fn-slot-btns">
             <button class="fn-plot-btn" data-fn="2">▶ Plot</button>
@@ -390,7 +414,7 @@
         <div class="fn-slot">
           <div class="fn-slot-top">
             <span class="fn-slot-label">y =</span>
-            <input class="fn-text-input" id="fn3Input" placeholder="2^x">
+            <input class="fn-text-input" id="fn3Input" placeholder="e.g. (x-1)(x-4)">
           </div>
           <div class="fn-slot-btns">
             <button class="fn-plot-btn" data-fn="3">▶ Plot</button>
@@ -425,6 +449,28 @@
     <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
     <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
     <div class="field"><label>X-axis Duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
+  </div>
+  <div class="panel-section">
+    <h3>Graph Window</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="field"><label>X Min (s)</label><input type="number" id="xMin" value="0" step="0.5"></div>
+      <div class="field"><label>X Max (s)</label><input type="number" id="xMax" value="5" step="0.5"></div>
+      <div class="field"><label>Y Min (ft)</label><input type="number" id="yMin" value="0" step="1"></div>
+      <div class="field"><label>Y Max (ft)</label><input type="number" id="yMax" value="12" step="1"></div>
+    </div>
+    <button class="btn-cal" id="applyWindowBtn">Apply Window</button>
+  </div>
+  <div class="panel-section">
+    <h3>🎾 Ball Tracking</h3>
+    <p style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);line-height:1.6;margin-bottom:8px;">
+      Hold a brightly colored ball in front of the camera. Press 🎾 in the header, then <strong style="color:var(--text)">click the ball</strong> in the video to pick its color. The camera tracks the ball's size to calculate distance.
+    </p>
+    <div class="field"><label>Ball Real Diameter (cm)</label><input type="number" id="ballDiameter" value="6.5" step="0.5"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+      <span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);">Picked color:</span>
+      <span id="ballColorSwatch"></span>
+      <span id="ballColorLabel" style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);">none</span>
+    </div>
   </div>
   <div class="panel-section">
     <h3>Export Data</h3>
