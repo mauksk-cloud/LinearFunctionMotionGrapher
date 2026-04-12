@@ -183,13 +183,14 @@ ballModeBtn.onclick = () => {
     }
 };
 
-// Click on video to pick ball color
-overlay.addEventListener("click", (e) => {
+// Click on the pick overlay to sample ball color
+ballPickOverlay.addEventListener("click", (e) => {
     if (!ballPickMode) return;
-    const rect = overlay.getBoundingClientRect();
+    // Get position relative to the videoWrapper (same coordinate space as overlay canvas)
+    const rect = videoWrapper.getBoundingClientRect();
     const cx   = (e.clientX - rect.left) / rect.width;
     const cy   = (e.clientY - rect.top)  / rect.height;
-    // Sample color from the offscreen (native) canvas
+    // Sample color from native video frame
     const vw = video.videoWidth, vh = video.videoHeight;
     const dw = videoWrapper.clientWidth, dh = videoWrapper.clientHeight;
     const videoAspect = vw / vh, displayAspect = dw / dh;
@@ -202,30 +203,34 @@ overlay.addEventListener("click", (e) => {
     tmpC.width = vw; tmpC.height = vh;
     const tmpCtx = tmpC.getContext('2d');
     tmpCtx.drawImage(video, 0, 0, vw, vh);
-    const px = tmpCtx.getImageData(Math.max(0,nx-2), Math.max(0,ny-2), 5, 5).data;
+    // Sample a 9x9 patch for a more robust color average
+    const patch = tmpCtx.getImageData(Math.max(0,nx-4), Math.max(0,ny-4), 9, 9).data;
     let r=0,g=0,b=0,n=0;
-    for (let i=0;i<px.length;i+=4){r+=px[i];g+=px[i+1];b+=px[i+2];n++;}
+    for (let i=0;i<patch.length;i+=4){r+=patch[i];g+=patch[i+1];b+=patch[i+2];n++;}
     r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
     ballColor = {r,g,b};
     ballColorSwatch.style.background = `rgb(${r},${g},${b})`;
     ballColorLabel.textContent = `rgb(${r},${g},${b})`;
     ballPickMode = false;
     ballPickOverlay.classList.remove("visible");
+    // Update tolerance based on how saturated the color is
+    // Bright saturated colors (tennis ball, orange) can use tighter tolerance
+    const maxC = Math.max(r,g,b), minC = Math.min(r,g,b);
+    const saturation = maxC > 0 ? (maxC - minC) / maxC : 0;
+    ballColorTolerance = saturation > 0.5 ? 45 : 35;
 });
 
 // ── Window Settings ──
 applyWindowBtn.onclick = () => {
-    const x0 = parseFloat(xMinInput.value) || 0;
+    const x0 = parseFloat(xMinInput.value);
     const x1 = parseFloat(xMaxInput.value) || 5;
-    const y0 = parseFloat(yMinInput.value) || 0;
+    const y0 = parseFloat(yMinInput.value);
     const y1 = parseFloat(yMaxInput.value) || 12;
-    chart.options.scales.x.min = x0;
+    chart.options.scales.x.min = isNaN(x0) ? 0 : x0;
     chart.options.scales.x.max = x1;
-    chart.options.scales.y.min = y0;
+    chart.options.scales.y.min = isNaN(y0) ? 0 : y0;
     chart.options.scales.y.max = y1;
-    // Sync the x-axis duration field too
     xAxisDurationInput.value = x1;
-    chart.update();
     // Replot fn overlays for new x range
     fnFunctions.forEach((fn, i) => { if (fn) plotFnOverlay(i); });
     chart.update();
@@ -354,8 +359,56 @@ function ensureFnDatasets() {
 }
 ensureFnDatasets();
 
+// ── Recording endpoint marker on x-axis ──
+Chart.register({
+    id: 'recordingMarker',
+    afterDraw(chartInst) {
+        const maxT = parseFloat(maxTimeInput.value) || 5;
+        const xScale = chartInst.scales.x;
+        const yScale = chartInst.scales.y;
+        if (!xScale || !yScale) return;
+        const xPx = xScale.getPixelForValue(maxT);
+        if (xPx < xScale.left || xPx > xScale.right) return;
+        const c2 = chartInst.ctx;
+        c2.save();
+        // Dashed vertical guide line
+        c2.strokeStyle = 'rgba(255,215,64,0.5)';
+        c2.lineWidth = 2;
+        c2.setLineDash([5, 4]);
+        c2.beginPath();
+        c2.moveTo(xPx, yScale.top);
+        c2.lineTo(xPx, yScale.bottom);
+        c2.stroke();
+        c2.setLineDash([]);
+        // Label above
+        c2.fillStyle = '#ffd740';
+        c2.font = 'bold 11px "Space Mono", monospace';
+        c2.textAlign = 'center';
+        c2.fillText(`${maxT}s ⏹`, xPx, yScale.top - 5);
+        // Bright tick on axis
+        c2.strokeStyle = '#ffd740';
+        c2.lineWidth = 3;
+        c2.beginPath();
+        c2.moveTo(xPx, yScale.bottom);
+        c2.lineTo(xPx, yScale.bottom + 8);
+        c2.stroke();
+        c2.restore();
+    }
+});
+function updateRecordingMarker() { chart.update(); }
+
 xAxisDurationInput.addEventListener("change", () => {
     chart.options.scales.x.max = parseFloat(xAxisDurationInput.value) || 5;
+    updateRecordingMarker();
+    chart.update();
+});
+
+// Keep maxTime and xAxisDuration in sync — they're the same thing now
+maxTimeInput.addEventListener("change", () => {
+    const val = parseFloat(maxTimeInput.value) || 5;
+    xAxisDurationInput.value = val;
+    chart.options.scales.x.max = val;
+    updateRecordingMarker();
     chart.update();
 });
 
@@ -940,7 +993,13 @@ function beginRecording() {
     startTime = Date.now(); lastRecordTime = 0;
     smoothBuffer = []; slopeBuffer = [];
     statusDot.classList.add("recording");
-    chart.options.scales.x.max = parseFloat(xAxisDurationInput.value) || 5;
+    // x-axis max = recording duration (unless window was manually expanded)
+    const recDur = parseFloat(maxTimeInput.value) || 5;
+    xAxisDurationInput.value = recDur;
+    // Only reset x.max if we haven't manually expanded the window beyond recording duration
+    if ((chart.options.scales.x.max || 5) < recDur) {
+        chart.options.scales.x.max = recDur;
+    }
     // Ghost previous run
     const prev = chart.data.datasets[0];
     if (prev && prev.data && prev.data.length > 0) {

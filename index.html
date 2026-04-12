@@ -134,53 +134,55 @@
     /* ── RIGHT: GAUGE + FUNCTION COLUMN ── */
     #rightCol {
       width: var(--right-w); flex-shrink: 0;
-      display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 8px 4px;
+      display: flex; flex-direction: column; gap: 5px; padding: 8px 8px 8px 4px;
+      overflow: hidden;
     }
 
-    /* Distance gauge */
+    /* Distance gauge — compact single row */
     #distGauge {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px;
-      flex-shrink: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 10px; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; gap: 6px;
     }
-    .gauge-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    #distReadout { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 3.2rem; color: var(--accent); line-height: 1; text-align: center; }
-    #distUnit    { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+    .gauge-label { font-family: 'Space Mono', monospace; font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    #distReadout { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 2.2rem; color: var(--accent); line-height: 1; text-align: right; }
+    #distUnit    { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted); }
 
-    /* Slope arrow gauge */
+    /* Slope arrow gauge — limited height */
     #slopeGauge {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px;
       flex-shrink: 0;
     }
-    #arrowCanvas { width: 100%; max-width: 180px; flex-shrink: 0; }
+    #arrowCanvas { width: 100%; max-width: 140px; flex-shrink: 0; }
     #slopeReadout {
-      font-family: 'Space Mono', monospace; font-size: 2.4rem; font-weight: 700;
+      font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700;
       text-align: center; line-height: 1;
     }
     #slopeReadout.pos  { color: var(--slope-pos); }
     #slopeReadout.neg  { color: var(--slope-neg); }
     #slopeReadout.zero { color: var(--slope-zero); }
     #slopeDirLabel {
-      font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700;
+      font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700;
       color: var(--text); text-align: center; letter-spacing: 1px; text-transform: uppercase;
     }
     .gauge-unit-small {
-      font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted);
+      font-family: 'Space Mono', monospace; font-size: 0.55rem; color: var(--muted);
     }
 
-    /* ── FUNCTION BOX — stacked full-width slots ── */
+    /* ── FUNCTION BOX — scrollable, fills remaining space ── */
     #fnBox {
       background: var(--surface); border: 2px solid var(--accent);
-      border-radius: 12px; padding: 10px 10px 8px; flex: 1; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: hidden;
+      border-radius: 10px; padding: 8px 8px 6px; flex: 1; min-height: 0;
+      display: flex; flex-direction: column; gap: 5px; overflow-y: auto;
     }
     #fnBox h3 {
-      font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent);
+      font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--accent);
       letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
     }
     .fn-slot {
-      display: flex; flex-direction: column; gap: 4px; flex: 1;
-      background: var(--surface2); border-radius: 8px; padding: 7px 8px;
+      display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;
+      background: var(--surface2); border-radius: 7px; padding: 6px 7px;
       border-left: 3px solid transparent;
     }
     .fn-slot:nth-child(2) { border-color: #ffd740; }
@@ -364,17 +366,22 @@
     <!-- RIGHT: GAUGES + FUNCTION BOX -->
     <div id="rightCol">
 
-      <!-- Distance gauge -->
+      <!-- Distance gauge — compact horizontal -->
       <div id="distGauge">
-        <div class="gauge-label">Distance from Camera</div>
-        <div id="distReadout">--</div>
-        <div id="distUnit">feet</div>
+        <div>
+          <div class="gauge-label">Distance</div>
+          <div id="distUnit">from camera</div>
+        </div>
+        <div>
+          <div id="distReadout">--</div>
+          <div id="distUnit2" style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--muted);text-align:right;">feet</div>
+        </div>
       </div>
 
       <!-- Slope arrow gauge -->
       <div id="slopeGauge">
         <div class="gauge-label">Slope (ft / sec)</div>
-        <canvas id="arrowCanvas" width="180" height="180"></canvas>
+        <canvas id="arrowCanvas" width="140" height="140"></canvas>
         <div id="slopeReadout" class="zero">+0.0</div>
         <div id="slopeDirLabel">constant</div>
         <div class="gauge-unit-small">ft / sec</div>
@@ -446,9 +453,14 @@
   </div>
   <div class="panel-section">
     <h3>Recording</h3>
-    <div class="field"><label>Max Recording Time (seconds)</label><input type="number" id="maxTime" value="5"></div>
+    <div class="field">
+      <label>Recording Duration (seconds)</label>
+      <input type="number" id="maxTime" value="5">
+      <span style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:2px;">Sets both max recording time and x-axis width. Use Graph Window below to expand the view further.</span>
+    </div>
     <div class="field"><label>Countdown Delay (seconds)</label><input type="number" id="countdownDelay" value="3" min="0" max="10"></div>
-    <div class="field"><label>X-axis Duration (seconds)</label><input type="number" id="xAxisDuration" value="5" min="1" max="30"></div>
+    <!-- Hidden sync field — keeps JS working -->
+    <input type="hidden" id="xAxisDuration" value="5">
   </div>
   <div class="panel-section">
     <h3>Graph Window</h3>
